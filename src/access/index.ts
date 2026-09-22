@@ -1,7 +1,10 @@
 import type { Access } from 'payload'
 
+export { loggedIn } from './loggedIn'
+export { publishedOrLoggedIn } from './publishedOrLoggedIn'
+
 /** Lecture publique. */
 export const anyone: Access = () => true
 
-/** Écriture réservée aux utilisateurs connectés à l'admin. */
-export const authenticated: Access = ({ req: { user } }) => Boolean(user)
+/** Alias historique de `loggedIn`, utilisé par les collections de taxonomies. */
+export { loggedIn as authenticated } from './loggedIn'
