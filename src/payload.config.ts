@@ -1,5 +1,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { seoPlugin } from '@payloadcms/plugin-seo'
+import type { GenerateDescription, GenerateTitle } from '@payloadcms/plugin-seo/types'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -10,10 +12,16 @@ import { Media } from './collections/Media'
 import { Categories } from './collections/Categories'
 import { Themes } from './collections/Themes'
 import { Tags } from './collections/Tags'
+import { Articles } from './collections/Articles'
+import type { Article } from './payload-types'
 import { fr } from '@payloadcms/translations/languages/fr'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+const generateTitle: GenerateTitle<Article> = ({ doc }) => `${doc?.title ?? ''} — Infos Élus`
+
+const generateDescription: GenerateDescription<Article> = ({ doc }) => doc?.excerpt ?? ''
 
 export default buildConfig({
   admin: {
@@ -22,7 +30,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Categories, Themes, Tags],
+  collections: [Users, Media, Categories, Themes, Tags, Articles],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -34,7 +42,15 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    seoPlugin({
+      collections: ['articles'],
+      tabbedUI: true,
+      uploadsCollection: 'media',
+      generateTitle,
+      generateDescription,
+    }),
+  ],
   i18n: {
     fallbackLanguage: 'fr',
     supportedLanguages: { fr },
