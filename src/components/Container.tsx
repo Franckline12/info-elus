@@ -4,23 +4,30 @@ import type { ReactNode } from 'react'
 
 type Props = {
   children: ReactNode
-  /** `narrow` pour les colonnes de lecture, `wide` pour les grilles éditoriales. */
+  /** `narrow` borne la colonne de lecture ; les autres occupent les 90 %. */
   width?: 'narrow' | 'default' | 'wide'
 } & Omit<ContainerProps, 'maxWidth' | 'children'>
 
-const MAX_WIDTH: Record<NonNullable<Props['width']>, ContainerProps['maxWidth']> = {
-  narrow: 'md',
-  default: 'lg',
-  wide: 'xl',
+/**
+ * Gouttière horizontale unique du site : le contenu occupe 90 % de la largeur de
+ * la page, centré, soit 5 % de marge de chaque côté. Toutes les pages passent
+ * par ici pour que les filets et les colonnes restent alignés d'une section à
+ * l'autre, masthead et pied de page compris.
+ */
+const WIDTHS: Record<NonNullable<Props['width']>, string> = {
+  narrow: 'min(90%, 760px)',
+  default: '90%',
+  wide: '90%',
 }
 
-/**
- * Gouttière horizontale unique du site : toutes les pages passent par ici pour
- * que les filets et les colonnes restent alignés d'une section à l'autre.
- */
 export function Container({ children, width = 'default', sx, ...rest }: Props) {
   return (
-    <MuiContainer maxWidth={MAX_WIDTH[width]} sx={{ px: { xs: 2, sm: 3, md: 4 }, ...sx }} {...rest}>
+    <MuiContainer
+      maxWidth={false}
+      disableGutters
+      sx={{ width: WIDTHS[width], mx: 'auto', ...sx }}
+      {...rest}
+    >
       {children}
     </MuiContainer>
   )

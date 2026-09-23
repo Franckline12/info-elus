@@ -38,6 +38,9 @@ const relationId = (value: number | { id: number } | null | undefined): number |
 export type GetArticlesArgs = {
   type: ContentType
   categorySlug?: string
+  tagSlug?: string
+  /** Recherche plein texte sur le titre et le chapô (§ 2.1). */
+  search?: string
   page?: number
   limit?: number
   /** Ids à écarter (l'actualité en grand format déjà affichée, par exemple). */
@@ -48,6 +51,8 @@ export type GetArticlesArgs = {
 export async function getArticles({
   type,
   categorySlug,
+  tagSlug,
+  search,
   page = 1,
   limit = 10,
   excludeIds = [],
@@ -56,6 +61,8 @@ export async function getArticles({
 
   const clauses: Where[] = [ofType(type)]
   if (categorySlug) clauses.push({ 'category.slug': { equals: categorySlug } })
+  if (tagSlug) clauses.push({ 'tags.slug': { equals: tagSlug } })
+  if (search) clauses.push({ or: [{ title: { like: search } }, { excerpt: { like: search } }] })
   if (excludeIds.length > 0) clauses.push({ id: { not_in: excludeIds } })
 
   return payload.find({

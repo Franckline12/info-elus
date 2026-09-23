@@ -14,6 +14,13 @@ const longDate = new Intl.DateTimeFormat(LOCALE, {
   timeZone: TIME_ZONE,
 })
 
+const mediumDate = new Intl.DateTimeFormat(LOCALE, {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: TIME_ZONE,
+})
+
 const shortDate = new Intl.DateTimeFormat(LOCALE, {
   day: '2-digit',
   month: '2-digit',
@@ -30,6 +37,10 @@ const toDate = (value: string | number | Date | null | undefined): Date | null =
 /** « 22 septembre 2026 » */
 export const formatLongDate = (value: string | number | Date | null | undefined): string =>
   toDate(value) ? longDate.format(toDate(value) as Date) : ''
+
+/** « 22 sept. 2026 » — format compact des métadonnées de vignette. */
+export const formatMediumDate = (value: string | number | Date | null | undefined): string =>
+  toDate(value) ? mediumDate.format(toDate(value) as Date) : ''
 
 /** « 22/09/2026 » */
 export const formatShortDate = (value: string | number | Date | null | undefined): string =>

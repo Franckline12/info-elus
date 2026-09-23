@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 import { absoluteUrl, siteName } from '@/lib/site'
-import type { Article, Media } from '@/payload-types'
+import type { Article, Guide, Media } from '@/payload-types'
 
 /**
  * Le plugin SEO génère des `meta.title` déjà suffixés « — Infos Élus », alors que
@@ -15,10 +15,19 @@ const asMedia = (value: Media | number | null | undefined): Media | null =>
   value && typeof value === 'object' ? value : null
 
 /**
+ * Contenu éditorial doté des champs du plugin SEO : articles et guides partagent
+ * exactement la même forme.
+ */
+type SeoContent = Pick<Article | Guide, 'title' | 'excerpt' | 'featuredImage' | 'updatedAt'> & {
+  meta?: Article['meta']
+  publishedAt?: string | null
+}
+
+/**
  * Métadonnées d'une page de contenu : champs SEO du CMS en priorité, repli sur
  * `title`, `excerpt` et `featuredImage` (§ 4.3).
  */
-export function articleMetadata(article: Article, path: string): Metadata {
+export function contentMetadata(article: SeoContent, path: string): Metadata {
   const title = stripSiteSuffix(article.meta?.title || article.title)
   const description = article.meta?.description || article.excerpt
   const image = asMedia(article.meta?.image) ?? asMedia(article.featuredImage)
@@ -58,3 +67,6 @@ export function articleMetadata(article: Article, path: string): Metadata {
     },
   }
 }
+
+/** Alias historique, conservé pour les pages d'article. */
+export const articleMetadata = contentMetadata

@@ -1,5 +1,6 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 
 import AppLink from '@/components/AppLink'
 import ArticleMeta from '@/components/ArticleMeta'
@@ -16,8 +17,11 @@ type Props = {
 const asCategory = (value: Article['category']): Category | null =>
   value && typeof value === 'object' ? value : null
 
-/** Entrée de fil chronologique : vignette étroite à gauche, texte à droite. */
-export function ArticleListItem({ article, showExcerpt = true }: Props) {
+/**
+ * Entrée de fil chronologique (maquette « Les autres actualités ») : vignette
+ * étroite à gauche, texte au centre, chevron de renvoi à droite.
+ */
+export function ArticleListItem({ article, showExcerpt = false }: Props) {
   const category = asCategory(article.category)
   const href = articlePath(article)
 
@@ -26,9 +30,11 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
       component="article"
       sx={{
         display: 'grid',
-        gridTemplateColumns: article.featuredImage ? { xs: '1fr', sm: '180px 1fr' } : '1fr',
-        gap: { xs: 2, sm: 3 },
-        alignItems: 'start',
+        gridTemplateColumns: article.featuredImage
+          ? { xs: '84px 1fr auto', sm: '132px 1fr auto' }
+          : '1fr auto',
+        gap: { xs: 1.5, sm: 2.5 },
+        alignItems: 'center',
       }}
     >
       {article.featuredImage ? (
@@ -36,35 +42,41 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
           <MediaImage
             media={article.featuredImage}
             ratio={4 / 3}
-            sizes="(max-width: 600px) 100vw, 180px"
+            sizes="(max-width: 600px) 84px, 132px"
           />
         </AppLink>
       ) : null}
 
-      <Box>
-        {category ? (
-          <Box sx={{ mb: 0.75 }}>
-            <CategoryLabel
-              name={category.name}
-              href={category.slug ? categoryPath(article.type, category.slug) : undefined}
-            />
-          </Box>
-        ) : null}
-
-        <Typography variant="h4" component="h3" sx={{ mb: 1 }}>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="h4" component="h3" sx={{ fontSize: '1rem', mb: 1 }}>
           <AppLink href={href} underline="none" sx={{ color: 'text.primary' }}>
             {article.title}
           </AppLink>
         </Typography>
 
         {showExcerpt ? (
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.25 }}>
             {article.excerpt}
           </Typography>
         ) : null}
 
-        <ArticleMeta publishedAt={article.publishedAt} readingTime={article.readingTime} />
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+          {category ? (
+            <CategoryLabel
+              name={category.name}
+              href={category.slug ? categoryPath(article.type, category.slug) : undefined}
+            />
+          ) : null}
+
+          <ArticleMeta
+            publishedAt={article.publishedAt}
+            readingTime={article.readingTime}
+            variant="compact"
+          />
+        </Box>
       </Box>
+
+      <ChevronRightIcon aria-hidden sx={{ color: 'text.secondary', justifySelf: 'end' }} />
     </Box>
   )
 }

@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box'
+import type { SxProps, Theme } from '@mui/material/styles'
 import Image from 'next/image'
 
 import type { Media } from '@/payload-types'
@@ -9,7 +10,10 @@ type Props = {
   sizes: string
   /** Rapport largeur/hauteur du cadre. `undefined` conserve les dimensions natives. */
   ratio?: number
+  /** L'image remplit toute la hauteur de son parent (colonne d'un bandeau). */
+  cover?: boolean
   priority?: boolean
+  sx?: SxProps<Theme>
 }
 
 /**
@@ -17,10 +21,10 @@ type Props = {
  * peuplée : `alt` est obligatoire côté CMS, on ne fabrique jamais d'alternative
  * textuelle vide (§ 4.5).
  */
-export function MediaImage({ media, sizes, ratio, priority = false }: Props) {
+export function MediaImage({ media, sizes, ratio, cover = false, priority = false, sx }: Props) {
   if (!media || typeof media !== 'object' || !media.url) return null
 
-  if (!ratio) {
+  if (!ratio && !cover) {
     return (
       <Image
         src={media.url}
@@ -35,7 +39,16 @@ export function MediaImage({ media, sizes, ratio, priority = false }: Props) {
   }
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', aspectRatio: String(ratio) }}>
+    <Box
+      sx={[
+        {
+          position: 'relative',
+          width: '100%',
+          ...(cover ? { height: '100%' } : { aspectRatio: String(ratio) }),
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
       <Image
         src={media.url}
         alt={media.alt}

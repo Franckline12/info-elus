@@ -2,111 +2,109 @@ import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 
 import ArticleCard from '@/components/article/ArticleCard'
-import ArticleListItem from '@/components/article/ArticleListItem'
-import FeaturedArticle from '@/components/article/FeaturedArticle'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
+import GuideCard from '@/components/guide/GuideCard'
+import GuideRail from '@/components/guide/GuideRail'
+import HomeHero from '@/components/home/HomeHero'
+import SectionShortcuts from '@/components/home/SectionShortcuts'
+import TestimonialCard from '@/components/home/TestimonialCard'
+import NewsletterBlock from '@/components/NewsletterBlock'
 import SectionHeading from '@/components/SectionHeading'
 import VisuallyHidden from '@/components/VisuallyHidden'
-import { getFeaturedNews, getFeaturedOnHome, getLatestNews } from '@/lib/queries/articles'
+import { getArticles, getFeaturedOnHome } from '@/lib/queries/articles'
+import { getFeaturedGuides } from '@/lib/queries/guides'
+import { getTestimonial } from '@/lib/queries/testimonials'
+import { guidesPath } from '@/lib/routes'
 import { siteName, siteTagline } from '@/lib/site'
-import { rule } from '@/theme/tokens'
 
-/** Page statique régénérée à la demande par le hook de la collection Articles. */
+/** Page statique régénérée à la demande par les hooks des collections. */
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const [featuredArticles, featuredNews] = await Promise.all([
-    getFeaturedOnHome(3),
-    getFeaturedNews(),
+  const [featured, guides, testimonial] = await Promise.all([
+    getFeaturedOnHome(1),
+    getFeaturedGuides(8),
+    getTestimonial(),
   ])
 
-  const latestNews = await getLatestNews(4, featuredNews ? [featuredNews.id] : [])
+  // Le bandeau reprend l'article coché « À la une » ; sans cochage, le plus
+  // récent fait l'ouverture — aucun contenu n'est fabriqué pour combler le vide.
+  const heroFromFeatured = featured[0] ?? null
 
-  const hasNews = Boolean(featuredNews) || latestNews.length > 0
+  const { docs: latestArticles } = await getArticles({
+    type: 'article',
+    limit: 4,
+    excludeIds: heroFromFeatured ? [heroFromFeatured.id] : [],
+  })
+
+  const hero = heroFromFeatured ?? latestArticles[0] ?? null
+  const recentArticles = (heroFromFeatured ? latestArticles : latestArticles.slice(1)).slice(0, 3)
 
   return (
-    <Container sx={{ py: { xs: 4, md: 6 } }}>
-      {/* Le titre de niveau 1 de l'accueil est le logotype du masthead ; il est
-          répété ici pour les lecteurs d'écran et les moteurs, ce qui laisse les
-          rubriques en niveau 2. */}
-      <VisuallyHidden component="h1">{`${siteName} — ${siteTagline}`}</VisuallyHidden>
-
-      <Box component="section" aria-labelledby="a-la-une">
-        <SectionHeading id="a-la-une" title="À la une" href="/articles" />
-
-        {featuredArticles.length === 0 ? (
+    <Container sx={{ py: { xs: 3, md: 4 } }}>
+      {hero ? (
+        <HomeHero article={hero} />
+      ) : (
+        <>
+          <VisuallyHidden component="h1">{`${siteName} — ${siteTagline}`}</VisuallyHidden>
           <EmptyState
-            title="Aucun article à la une"
-            description="Cochez « À la une » sur un article depuis l’administration pour le faire apparaître ici."
+            title="Aucun article publié"
+            description="Publiez un article depuis l’administration, puis cochez « À la une » pour l’afficher ici."
           />
-        ) : (
-          <Grid container spacing={{ xs: 4, md: 5 }}>
-            {featuredArticles.map((article, index) => (
-              <Grid
-                key={article.id}
-                size={{ xs: 12, md: 4 }}
-                sx={{
-                  borderTop: { xs: `1px solid ${rule}`, md: 'none' },
-                  borderLeft: { md: `1px solid ${rule}` },
-                  pt: { xs: 3, md: 0 },
-                  pl: { md: 4 },
-                  '&:first-of-type': {
-                    borderTop: 'none',
-                    borderLeft: 'none',
-                    pt: 0,
-                    pl: { md: 0 },
-                  },
-                }}
-              >
-                <ArticleCard article={article} priority={index === 0} />
+        </>
+      )}
+
+      <Box sx={{ mt: { xs: 3, md: 4 } }}>
+        <SectionShortcuts />
+      </Box>
+
+      {guides.length > 0 ? (
+        <Box component="section" aria-labelledby="guides-cse" sx={{ mt: { xs: 5, md: 6 } }}>
+          <SectionHeading
+            id="guides-cse"
+            title="Guides CSE"
+            href={guidesPath}
+            linkLabel="Voir tous les guides"
+          />
+
+          <GuideRail label="Guides CSE">
+            {guides.map((guide, index) => (
+              <GuideCard key={guide.id} guide={guide} priority={index < 2} />
+            ))}
+          </GuideRail>
+        </Box>
+      ) : null}
+
+      {recentArticles.length > 0 ? (
+        <Box component="section" aria-labelledby="articles-recents" sx={{ mt: { xs: 5, md: 6 } }}>
+          <SectionHeading
+            id="articles-recents"
+            title="Articles récents"
+            href="/articles"
+            linkLabel="Voir tous les articles"
+          />
+
+          <Grid container spacing={{ xs: 2.5, md: 3 }}>
+            {recentArticles.map((article) => (
+              <Grid key={article.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <ArticleCard article={article} />
               </Grid>
             ))}
           </Grid>
-        )}
-      </Box>
+        </Box>
+      ) : null}
 
-      <Box component="section" aria-labelledby="actualite" sx={{ mt: { xs: 7, md: 10 } }}>
-        <SectionHeading id="actualite" title="Actualité" href="/actualite" />
-
-        {!hasNews ? (
-          <EmptyState
-            title="Aucune actualité publiée"
-            description="Le fil d’actualité apparaîtra ici dès la première publication."
-          />
-        ) : (
-          <Grid container spacing={{ xs: 5, md: 5 }}>
-            {featuredNews ? (
-              <Grid size={{ xs: 12, md: latestNews.length > 0 ? 7 : 12 }}>
-                <FeaturedArticle article={featuredNews} priority={false} />
-              </Grid>
-            ) : null}
-
-            {latestNews.length > 0 ? (
-              <Grid
-                size={{ xs: 12, md: featuredNews ? 5 : 12 }}
-                sx={{
-                  borderTop: { xs: `1px solid ${rule}`, md: featuredNews ? 'none' : undefined },
-                  borderLeft: { md: featuredNews ? `1px solid ${rule}` : 'none' },
-                  pt: { xs: 4, md: 0 },
-                  pl: { md: featuredNews ? 4 : 0 },
-                }}
-              >
-                <Box sx={{ display: 'grid', gap: 3 }}>
-                  {latestNews.map((article, index) => (
-                    <Box
-                      key={article.id}
-                      sx={index > 0 ? { borderTop: `1px solid ${rule}`, pt: 3 } : undefined}
-                    >
-                      <ArticleListItem article={article} showExcerpt={false} />
-                    </Box>
-                  ))}
-                </Box>
-              </Grid>
-            ) : null}
+      <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ mt: { xs: 5, md: 6 } }}>
+        <Grid size={{ xs: 12, md: testimonial ? 8 : 12 }}>
+          <NewsletterBlock />
+        </Grid>
+        {testimonial ? (
+          <Grid size={{ xs: 12, md: 4 }}>
+            <TestimonialCard testimonial={testimonial} />
           </Grid>
-        )}
-      </Box>
+        ) : null}
+      </Grid>
     </Container>
   )
 }

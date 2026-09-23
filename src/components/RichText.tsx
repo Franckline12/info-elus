@@ -7,7 +7,8 @@ import type { JSXConvertersFunction } from '@payloadcms/richtext-lexical/react'
 
 import type { CalloutBlock, Media } from '@/payload-types'
 import { articlePath } from '@/lib/routes'
-import { colors, fonts, measure, rule } from '@/theme/tokens'
+import { headingId } from '@/lib/toc'
+import { colors, fonts, measure, radius, rule } from '@/theme/tokens'
 
 import AppLink from './AppLink'
 import Callout from './Callout'
@@ -45,6 +46,19 @@ const internalDocToHref = ({
   return '/articles'
 }
 
+/** Texte brut d'un titre, pour en dériver l'ancre. */
+const headingText = (nodes: unknown): string => {
+  if (!Array.isArray(nodes)) return ''
+
+  return nodes
+    .map((node) => {
+      const candidate = node as { text?: unknown; children?: unknown }
+      if (typeof candidate.text === 'string') return candidate.text
+      return headingText(candidate.children)
+    })
+    .join('')
+}
+
 const converters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
@@ -53,8 +67,17 @@ const converters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => 
     const children = nodesToJSX({ nodes: node.children })
     const { variant, mt, mb } = HEADING_VARIANTS[node.tag] ?? HEADING_VARIANTS.h3
 
+    // Même ancre que celle calculée par le sommaire (`extractToc`).
+    const label = headingText(node.children).trim()
+    const id = label ? headingId(label) : undefined
+
     return (
-      <Typography variant={variant} component={node.tag} sx={{ mt, mb, scrollMarginTop: 24 }}>
+      <Typography
+        id={id}
+        variant={variant}
+        component={node.tag}
+        sx={{ mt, mb, scrollMarginTop: 24 }}
+      >
         {children}
       </Typography>
     )
@@ -79,10 +102,14 @@ const converters: JSXConvertersFunction<NodeTypes> = ({ defaultConverters }) => 
       sx={{
         my: 4,
         mx: 0,
-        pl: { xs: 2, sm: 3 },
-        borderLeft: `3px solid ${colors.blueBright}`,
+        px: { xs: 2, sm: 3 },
+        py: { xs: 2, sm: 2.5 },
+        backgroundColor: colors.sandPale,
+        borderLeft: `3px solid ${colors.accentQuiz}`,
+        borderRadius: `${radius}px`,
         fontFamily: fonts.serif,
-        fontSize: 'clamp(1.125rem, 1.05rem + 0.4vw, 1.3125rem)',
+        fontStyle: 'italic',
+        fontSize: 'clamp(1.0625rem, 1rem + 0.35vw, 1.1875rem)',
         lineHeight: 1.55,
         color: 'text.primary',
         '& p': { margin: 0 },

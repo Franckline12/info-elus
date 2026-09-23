@@ -4,7 +4,7 @@ import { createTheme } from '@mui/material/styles'
 import type { PaletteColor, PaletteColorOptions } from '@mui/material/styles'
 import type { CSSProperties } from 'react'
 
-import { colors, fonts, rule } from './tokens'
+import { colors, fonts, radius, rule, surfaceBorder } from './tokens'
 
 declare module '@mui/material/styles' {
   interface Palette {
@@ -32,12 +32,37 @@ declare module '@mui/material/Typography' {
   }
 }
 
+declare module '@mui/material/Button' {
+  interface ButtonPropsColorOverrides {
+    accentQuiz: true
+    blueDeep: true
+    bluePale: true
+  }
+}
+
+declare module '@mui/material/Chip' {
+  interface ChipPropsColorOverrides {
+    accentQuiz: true
+    blueDeep: true
+    bluePale: true
+  }
+}
+
+declare module '@mui/material/IconButton' {
+  interface IconButtonPropsColorOverrides {
+    accentQuiz: true
+    blueDeep: true
+    bluePale: true
+  }
+}
+
 /**
  * Thème du front public uniquement : il n'est monté que dans le groupe de routes
  * `(frontend)`, l'admin Payload conserve ses propres styles.
  *
- * Parti pris éditorial (§ 5.3) : aucun arrondi, aucune ombre, aucune élévation.
- * Ces règles sont posées ici une fois pour toutes plutôt que composant par composant.
+ * Parti pris éditorial (§ 5.3) : aucune ombre, aucune élévation, un rayon de
+ * 4 px hérité de la maquette. Ces règles sont posées ici une fois pour toutes
+ * plutôt que composant par composant.
  */
 export const theme = createTheme({
   // Valeurs par défaut de MUI, reprises explicitement : elles correspondent aux
@@ -79,17 +104,17 @@ export const theme = createTheme({
       light: colors.paperRaised,
       main: colors.bluePale,
       dark: colors.blueMid,
-      contrastText: colors.ink,
+      contrastText: colors.blueMid,
     },
     accentQuiz: {
       light: '#F0C989',
       main: colors.accentQuiz,
-      dark: '#B77C22',
+      dark: '#C9862A',
       contrastText: colors.ink,
     },
   },
 
-  shape: { borderRadius: 0 },
+  shape: { borderRadius: radius },
 
   // Traitement éditorial : jamais d'ombre portée, à aucun niveau d'élévation.
   shadows: Array.from({ length: 25 }, () => 'none') as unknown as ReturnType<
@@ -181,17 +206,29 @@ export const theme = createTheme({
       },
     },
 
-    // Blocs de contenu : bordure fine, pas d'ombre, pas d'élévation.
+    // Surfaces de contenu : papier surélevé, bordure très fine, jamais d'ombre.
     MuiPaper: {
       defaultProps: { elevation: 0, variant: 'outlined' },
       styleOverrides: {
-        root: { backgroundImage: 'none', borderRadius: 0 },
-        outlined: { borderColor: rule },
+        root: { backgroundImage: 'none', borderRadius: radius },
+        outlined: { borderColor: surfaceBorder },
       },
     },
     MuiCard: {
       defaultProps: { elevation: 0, variant: 'outlined' },
-      styleOverrides: { root: { backgroundImage: 'none', borderRadius: 0 } },
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+          backgroundColor: colors.paperRaised,
+          borderColor: surfaceBorder,
+          borderRadius: radius,
+        },
+      },
+    },
+    MuiCardContent: {
+      styleOverrides: {
+        root: { padding: 20, '&:last-child': { paddingBottom: 20 } },
+      },
     },
 
     MuiButtonBase: {
@@ -201,8 +238,30 @@ export const theme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true, disableRipple: true },
       styleOverrides: {
-        root: { textTransform: 'none', borderRadius: 0, boxShadow: 'none' },
+        root: {
+          textTransform: 'none',
+          borderRadius: radius,
+          boxShadow: 'none',
+          fontWeight: 600,
+        },
         outlined: { borderColor: rule },
+        sizeSmall: { fontSize: '0.8125rem', paddingInline: 14 },
+      },
+    },
+
+    // Badges de rubrique : rectangle très légèrement adouci, jamais de pilule.
+    MuiChip: {
+      defaultProps: { size: 'small' },
+      styleOverrides: {
+        root: {
+          borderRadius: radius - 1,
+          fontWeight: 500,
+          fontSize: '0.75rem',
+          letterSpacing: '0.01em',
+        },
+        sizeSmall: { height: 24, paddingInline: 2 },
+        filled: { backgroundColor: colors.bluePale, color: colors.blueMid },
+        outlined: { borderColor: surfaceBorder },
       },
     },
 
@@ -215,6 +274,16 @@ export const theme = createTheme({
 
     MuiContainer: { defaultProps: { maxWidth: 'lg' } },
 
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: { borderRadius: radius, backgroundColor: '#FFFFFF' },
+        notchedOutline: { borderColor: surfaceBorder },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: { input: { fontSize: '0.9375rem' } },
+    },
+
     MuiBreadcrumbs: {
       styleOverrides: {
         separator: { marginLeft: 6, marginRight: 6, color: colors.textSecondary },
@@ -222,7 +291,7 @@ export const theme = createTheme({
     },
 
     MuiPaginationItem: {
-      styleOverrides: { root: { borderRadius: 0, fontWeight: 500 } },
+      styleOverrides: { root: { borderRadius: radius, fontWeight: 500 } },
     },
   },
 })
