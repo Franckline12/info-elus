@@ -11,7 +11,9 @@ relis la section concernée avant chaque tâche.
 - PostgreSQL 17 dans Docker (`docker-compose.yml`, conteneur `infos-elus-db`, port hôte 5433)
 - Variable de connexion : `DATABASE_URL` dans `.env` (ne jamais committer `.env`)
 - TypeScript strict, `moduleResolution: bundler`
-- Tailwind CSS pour le front public
+- Material UI (MUI) + Emotion pour le front public, intégré via `@mui/material-nextjs`
+  (thème dans `src/theme/theme.ts`, jetons partagés dans `src/theme/tokens.ts`).
+  Pas de Tailwind. Icônes : importées une par une depuis `@mui/icons-material/<Nom>`
 - Admin Payload en français (`i18n` dans `payload.config.ts`)
 - La skill Payload est installée dans le projet : consulte-la pour les conventions Payload
 
@@ -37,8 +39,11 @@ Variables CSS : --color-paper #F3F0E6, --color-paper-raised #FBFAF4, --color-ink
 --color-text-secondary #565C78, --color-blue-deep #12193B, --color-blue-mid #24356F,
 --color-blue-bright #3E63E0, --color-blue-pale #E4E9FB, --color-accent-quiz #E3A23E.
 Polices : Space Grotesk (titres + texte, en attendant Roc Grotesk), Source Serif 4 (chapôs, citations).
-Style éditorial type journal : masthead, filets fins. PAS de cartes arrondies avec ombre.
-L'ocre est réservé exclusivement à la section Jeux & Quiz.
+Style éditorial type journal : masthead, filets fins. Jamais d'ombre ni d'élévation ;
+rayon unique de 4 px sur les surfaces (jeton `radius`), angles droits sur les filets.
+L'ocre reste la couleur dominante de Jeux & Quiz ; d'après la maquette, il sert aussi
+aux appels à l'action (bouton Newsletter, « Lire l'article », « S'inscrire »), aux
+badges « sable » de l'en-tête d'un contenu et aux encadrés de citation.
 Breakpoints : 900px (tablette, menu en accordéon) et 600px (mobile).
 
 ## Environnement

@@ -72,6 +72,11 @@ export interface Config {
     categories: Category;
     themes: Theme;
     tags: Tag;
+    articles: Article;
+    guides: Guide;
+    quizzes: Quiz;
+    providers: Provider;
+    testimonials: Testimonial;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +89,11 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     themes: ThemesSelect<false> | ThemesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    guides: GuidesSelect<false> | GuidesSelect<true>;
+    quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
+    providers: ProvidersSelect<false> | ProvidersSelect<true>;
+    testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -217,6 +227,231 @@ export interface Tag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: number;
+  title: string;
+  /**
+   * Résumé d’accroche affiché sous le titre, dans les listes et les partages. 300 caractères maximum.
+   */
+  excerpt: string;
+  /**
+   * Illustration de tête, reprise dans les listes et l’aperçu social.
+   */
+  featuredImage?: (number | null) | Media;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  category: number | Category;
+  tags?: (number | Tag)[] | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  type: 'article' | 'news';
+  /**
+   * Renseignée automatiquement à la première publication si elle est vide.
+   */
+  publishedAt?: string | null;
+  /**
+   * Plusieurs articles peuvent être à la une.
+   */
+  featuredOnHome?: boolean | null;
+  /**
+   * Une seule actualité à la fois : cocher ici décoche les autres.
+   */
+  featuredInNews?: boolean | null;
+  /**
+   * Calculé automatiquement à partir du corps de l’article.
+   */
+  readingTime?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guides".
+ */
+export interface Guide {
+  id: number;
+  title: string;
+  /**
+   * Résumé court affiché sous le titre et dans les listes. 300 caractères maximum.
+   */
+  excerpt: string;
+  /**
+   * Illustration de tête, reprise dans le rail de l’accueil.
+   */
+  featuredImage?: (number | null) | Media;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Détermine la couleur de bordure du guide (§ 5.3).
+   */
+  theme: number | Theme;
+  tags?: (number | Tag)[] | null;
+  /**
+   * Modèles, PV type… affichés dans la colonne du guide.
+   */
+  resources?:
+    | {
+        label: string;
+        file: number | Media;
+        id?: string | null;
+      }[]
+    | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * Renseignée automatiquement à la première publication si elle est vide.
+   */
+  publishedAt?: string | null;
+  /**
+   * Les guides cochés ouvrent le rail « Guides CSE » de la page d’accueil.
+   */
+  featuredOnHome?: boolean | null;
+  /**
+   * Calculé automatiquement à partir du corps du guide.
+   */
+  readingTime?: number | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quizzes".
+ */
+export interface Quiz {
+  id: number;
+  title: string;
+  /**
+   * Phrase d’accroche affichée avant de lancer le quiz.
+   */
+  excerpt: string;
+  theme?: (number | null) | Theme;
+  questions: {
+    prompt: string;
+    options: {
+      text: string;
+      isCorrect?: boolean | null;
+      id?: string | null;
+    }[];
+    /**
+     * Affichée après validation de la réponse. Facultative.
+     */
+    explanation?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * Renseignée automatiquement à la première publication si elle est vide.
+   */
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "providers".
+ */
+export interface Provider {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  description: string;
+  category: 'formation' | 'legal' | 'accounting' | 'leisure' | 'events';
+  /**
+   * Par exemple « Île-de-France » ou « France entière ».
+   */
+  area?: string | null;
+  /**
+   * URL complète, avec https://
+   */
+  website?: string | null;
+  email?: string | null;
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials".
+ */
+export interface Testimonial {
+  id: number;
+  /**
+   * Une à deux phrases. Les guillemets sont ajoutés à l’affichage.
+   */
+  quote: string;
+  /**
+   * Prénom et initiale, ou « Un élu de CSE ». Facultatif.
+   */
+  author?: string | null;
+  /**
+   * Par exemple « Secrétaire de CSE, 240 salariés ». Facultatif.
+   */
+  role?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -258,6 +493,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tags';
         value: number | Tag;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: number | Article;
+      } | null)
+    | ({
+        relationTo: 'guides';
+        value: number | Guide;
+      } | null)
+    | ({
+        relationTo: 'quizzes';
+        value: number | Quiz;
+      } | null)
+    | ({
+        relationTo: 'providers';
+        value: number | Provider;
+      } | null)
+    | ({
+        relationTo: 'testimonials';
+        value: number | Testimonial;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -376,6 +631,125 @@ export interface TagsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  excerpt?: T;
+  featuredImage?: T;
+  content?: T;
+  category?: T;
+  tags?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  slug?: T;
+  type?: T;
+  publishedAt?: T;
+  featuredOnHome?: T;
+  featuredInNews?: T;
+  readingTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guides_select".
+ */
+export interface GuidesSelect<T extends boolean = true> {
+  title?: T;
+  excerpt?: T;
+  featuredImage?: T;
+  content?: T;
+  theme?: T;
+  tags?: T;
+  resources?:
+    | T
+    | {
+        label?: T;
+        file?: T;
+        id?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  slug?: T;
+  publishedAt?: T;
+  featuredOnHome?: T;
+  readingTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quizzes_select".
+ */
+export interface QuizzesSelect<T extends boolean = true> {
+  title?: T;
+  excerpt?: T;
+  theme?: T;
+  questions?:
+    | T
+    | {
+        prompt?: T;
+        options?:
+          | T
+          | {
+              text?: T;
+              isCorrect?: T;
+              id?: T;
+            };
+        explanation?: T;
+        id?: T;
+      };
+  slug?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "providers_select".
+ */
+export interface ProvidersSelect<T extends boolean = true> {
+  name?: T;
+  logo?: T;
+  description?: T;
+  category?: T;
+  area?: T;
+  website?: T;
+  email?: T;
+  slug?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "testimonials_select".
+ */
+export interface TestimonialsSelect<T extends boolean = true> {
+  quote?: T;
+  author?: T;
+  role?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -423,6 +797,31 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CalloutBlock".
+ */
+export interface CalloutBlock {
+  variant: 'info' | 'warning' | 'keyPoint';
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'callout';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
