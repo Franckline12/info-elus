@@ -1,59 +1,112 @@
-import { headers as getHeaders } from 'next/headers.js'
-import Image from 'next/image'
-import { getPayload } from 'payload'
-import React from 'react'
-import { fileURLToPath } from 'url'
+import Box from '@mui/material/Box'
+import Grid from '@mui/material/Grid'
 
-import config from '@/payload.config'
-import './styles.css'
+import ArticleCard from '@/components/article/ArticleCard'
+import ArticleListItem from '@/components/article/ArticleListItem'
+import FeaturedArticle from '@/components/article/FeaturedArticle'
+import Container from '@/components/Container'
+import EmptyState from '@/components/EmptyState'
+import SectionHeading from '@/components/SectionHeading'
+import VisuallyHidden from '@/components/VisuallyHidden'
+import { getFeaturedNews, getFeaturedOnHome, getLatestNews } from '@/lib/queries/articles'
+import { siteName, siteTagline } from '@/lib/site'
+import { rule } from '@/theme/tokens'
+
+/** Page statique régénérée à la demande par le hook de la collection Articles. */
+export const revalidate = 3600
 
 export default async function HomePage() {
-  const headers = await getHeaders()
-  const payloadConfig = await config
-  const payload = await getPayload({ config: payloadConfig })
-  const { user } = await payload.auth({ headers })
+  const [featuredArticles, featuredNews] = await Promise.all([
+    getFeaturedOnHome(3),
+    getFeaturedNews(),
+  ])
 
-  const fileURL = `vscode://file/${fileURLToPath(import.meta.url)}`
+  const latestNews = await getLatestNews(4, featuredNews ? [featuredNews.id] : [])
+
+  const hasNews = Boolean(featuredNews) || latestNews.length > 0
 
   return (
-    <div className="home">
-      <div className="content">
-        <picture>
-          <source srcSet="https://raw.githubusercontent.com/payloadcms/payload/3.x/packages/ui/src/assets/payload-favicon.svg" />
-          <Image
-            alt="Payload Logo"
-            height={65}
-            src="https://raw.githubusercontent.com/payloadcms/payload/3.x/packages/ui/src/assets/payload-favicon.svg"
-            width={65}
+    <Container sx={{ py: { xs: 4, md: 6 } }}>
+      {/* Le titre de niveau 1 de l'accueil est le logotype du masthead ; il est
+          répété ici pour les lecteurs d'écran et les moteurs, ce qui laisse les
+          rubriques en niveau 2. */}
+      <VisuallyHidden component="h1">{`${siteName} — ${siteTagline}`}</VisuallyHidden>
+
+      <Box component="section" aria-labelledby="a-la-une">
+        <SectionHeading id="a-la-une" title="À la une" href="/articles" />
+
+        {featuredArticles.length === 0 ? (
+          <EmptyState
+            title="Aucun article à la une"
+            description="Cochez « À la une » sur un article depuis l’administration pour le faire apparaître ici."
           />
-        </picture>
-        {!user && <h1>Welcome to your new project.</h1>}
-        {user && <h1>Welcome back, {user.email}</h1>}
-        <div className="links">
-          <a
-            className="admin"
-            href={payloadConfig.routes.admin}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Go to admin panel
-          </a>
-          <a
-            className="docs"
-            href="https://payloadcms.com/docs"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            Documentation
-          </a>
-        </div>
-      </div>
-      <div className="footer">
-        <p>Update this page by editing</p>
-        <a className="codeLink" href={fileURL}>
-          <code>app/(frontend)/page.tsx</code>
-        </a>
-      </div>
-    </div>
+        ) : (
+          <Grid container spacing={{ xs: 4, md: 5 }}>
+            {featuredArticles.map((article, index) => (
+              <Grid
+                key={article.id}
+                size={{ xs: 12, md: 4 }}
+                sx={{
+                  borderTop: { xs: `1px solid ${rule}`, md: 'none' },
+                  borderLeft: { md: `1px solid ${rule}` },
+                  pt: { xs: 3, md: 0 },
+                  pl: { md: 4 },
+                  '&:first-of-type': {
+                    borderTop: 'none',
+                    borderLeft: 'none',
+                    pt: 0,
+                    pl: { md: 0 },
+                  },
+                }}
+              >
+                <ArticleCard article={article} priority={index === 0} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Box>
+
+      <Box component="section" aria-labelledby="actualite" sx={{ mt: { xs: 7, md: 10 } }}>
+        <SectionHeading id="actualite" title="Actualité" href="/actualite" />
+
+        {!hasNews ? (
+          <EmptyState
+            title="Aucune actualité publiée"
+            description="Le fil d’actualité apparaîtra ici dès la première publication."
+          />
+        ) : (
+          <Grid container spacing={{ xs: 5, md: 5 }}>
+            {featuredNews ? (
+              <Grid size={{ xs: 12, md: latestNews.length > 0 ? 7 : 12 }}>
+                <FeaturedArticle article={featuredNews} priority={false} />
+              </Grid>
+            ) : null}
+
+            {latestNews.length > 0 ? (
+              <Grid
+                size={{ xs: 12, md: featuredNews ? 5 : 12 }}
+                sx={{
+                  borderTop: { xs: `1px solid ${rule}`, md: featuredNews ? 'none' : undefined },
+                  borderLeft: { md: featuredNews ? `1px solid ${rule}` : 'none' },
+                  pt: { xs: 4, md: 0 },
+                  pl: { md: featuredNews ? 4 : 0 },
+                }}
+              >
+                <Box sx={{ display: 'grid', gap: 3 }}>
+                  {latestNews.map((article, index) => (
+                    <Box
+                      key={article.id}
+                      sx={index > 0 ? { borderTop: `1px solid ${rule}`, pt: 3 } : undefined}
+                    >
+                      <ArticleListItem article={article} showExcerpt={false} />
+                    </Box>
+                  ))}
+                </Box>
+              </Grid>
+            ) : null}
+          </Grid>
+        )}
+      </Box>
+    </Container>
   )
 }

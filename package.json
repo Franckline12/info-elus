@@ -18,6 +18,11 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.4.0",
+    "@mui/material": "^9.4.0",
+    "@mui/material-nextjs": "^9.4.0",
     "@payloadcms/db-postgres": "3.90.1",
     "@payloadcms/next": "3.90.1",
     "@payloadcms/plugin-seo": "3.90.1",
