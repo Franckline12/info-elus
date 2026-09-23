@@ -3,7 +3,6 @@ import Chip from '@mui/material/Chip'
 import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
-import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
 
 import AppLink from '@/components/AppLink'
 import ArticleToc from '@/components/article/ArticleToc'
@@ -20,7 +19,7 @@ import { toDateTimeAttribute } from '@/lib/formatDate'
 import { guidePath, guidesPath, themePath } from '@/lib/routes'
 import { absoluteUrl, siteName } from '@/lib/site'
 import { asTheme, themeColor } from '@/lib/themeColor'
-import { extractToc } from '@/lib/toc'
+import { guideToc } from '@/lib/toc'
 import type { Guide, Media, Tag } from '@/payload-types'
 import { colors, radius } from '@/theme/tokens'
 
@@ -31,6 +30,9 @@ type Props = {
   guide: Guide
   related: Guide[]
 }
+
+/** Assez d'air sous l'en-tête pour qu'un titre visé par une ancre reste lisible. */
+const SCROLL_MARGIN = 96
 
 const asTags = (value: Guide['tags']): TagListItem[] =>
   (value ?? []).filter((tag): tag is Tag => typeof tag === 'object' && tag !== null)
@@ -44,7 +46,7 @@ export function GuideDetail({ guide, related }: Props) {
   const tags = asTags(guide.tags)
   const image = asMedia(guide.featuredImage)
   const url = absoluteUrl(guidePath(guide))
-  const toc = extractToc(guide.content)
+  const toc = guideToc(guide.sections)
   const accent = themeColor(theme?.color)
   const resources = guide.resources ?? []
   const hasAside = toc.length > 0 || resources.length > 0
@@ -53,7 +55,7 @@ export function GuideDetail({ guide, related }: Props) {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: guide.title,
-    description: guide.excerpt,
+    description: guide.summary,
     ...(image?.url ? { image: [absoluteUrl(image.url)] } : {}),
     ...(guide.publishedAt ? { datePublished: toDateTimeAttribute(guide.publishedAt) } : {}),
     dateModified: toDateTimeAttribute(guide.updatedAt),
@@ -116,30 +118,26 @@ export function GuideDetail({ guide, related }: Props) {
               </Typography>
 
               <Typography variant="lede" component="p" sx={{ color: 'text.secondary', mb: 2 }}>
-                {guide.excerpt}
+                {guide.summary}
               </Typography>
 
-              {typeof guide.readingTime === 'number' && guide.readingTime > 0 ? (
-                <Typography
-                  component="p"
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    fontSize: '0.8125rem',
-                    color: 'text.secondary',
-                    m: 0,
-                  }}
-                >
-                  <AccessTimeOutlinedIcon aria-hidden sx={{ fontSize: '0.95em', opacity: 0.8 }} />
-                  {guide.readingTime} min de lecture
-                </Typography>
-              ) : null}
             </Box>
 
             <Divider sx={{ my: { xs: 3, md: 4 } }} />
 
-            <RichText data={guide.content} />
+            {(guide.sections ?? []).map((section) => (
+              <Box component="section" key={section.id ?? section.anchor}>
+                <Typography
+                  id={section.anchor ?? undefined}
+                  variant="h2"
+                  component="h2"
+                  sx={{ mt: 6, mb: 2, scrollMarginTop: SCROLL_MARGIN }}
+                >
+                  {section.heading}
+                </Typography>
+                <RichText data={section.content} />
+              </Box>
+            ))}
 
             {tags.length > 0 ? (
               <Box sx={{ mt: 5 }}>

@@ -17,15 +17,25 @@ import { Guides } from './collections/Guides'
 import { Quizzes } from './collections/Quizzes'
 import { Providers } from './collections/Providers'
 import { Testimonials } from './collections/Testimonials'
-import type { Article } from './payload-types'
 import { fr } from '@payloadcms/translations/languages/fr'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-const generateTitle: GenerateTitle<Article> = ({ doc }) => `${doc?.title ?? ''} — Infos Élus`
+/**
+ * Forme commune aux contenus indexables : les articles portent un chapô
+ * (`excerpt`), les guides un résumé court (`summary`).
+ */
+type SeoDoc = {
+  title?: string | null
+  excerpt?: string | null
+  summary?: string | null
+}
 
-const generateDescription: GenerateDescription<Article> = ({ doc }) => doc?.excerpt ?? ''
+const generateTitle: GenerateTitle<SeoDoc> = ({ doc }) => `${doc?.title ?? ''} — Infos Élus`
+
+const generateDescription: GenerateDescription<SeoDoc> = ({ doc }) =>
+  doc?.excerpt ?? doc?.summary ?? ''
 
 export default buildConfig({
   admin: {

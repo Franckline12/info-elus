@@ -1,4 +1,88 @@
-# Payload Blank Template
+# Infos Élus
+
+Média web pour les élus de CSE — Next.js 16 (App Router) + Payload CMS 3 + PostgreSQL 17.
+Contexte et conventions : `CLAUDE.md`. Spécifications : `cahier-des-charges.md`.
+
+## Installation (première fois)
+
+Prérequis : **Node 20+** (testé en 22), **npm**, **Docker** + plugin Compose, **Git** avec une
+clé SSH autorisée sur l'organisation `studio-BoandCo`.
+
+```bash
+git clone git@github.com:studio-BoandCo/info-elus.git
+cd info-elus
+git checkout dev            # branche d'intégration
+
+cp .env.example .env        # puis remplir les valeurs (voir ci-dessous)
+docker compose up -d        # démarre PostgreSQL 17 sur le port hôte 5433
+npm install                 # npm, pas pnpm : c'est package-lock.json qui fait foi
+npm run generate:types      # régénère src/payload-types.ts
+npm run dev                 # http://localhost:3000
+```
+
+### Variables d'environnement
+
+`.env` n'est **pas** versionné : demande les valeurs à l'équipe, ou génère les tiennes.
+
+| Variable                 | Rôle                                                                 |
+| ------------------------ | -------------------------------------------------------------------- |
+| `DB_PASSWORD`            | mot de passe du conteneur PostgreSQL                                  |
+| `DATABASE_URL`           | `postgres://infos_elus_user:<DB_PASSWORD>@localhost:5433/infos_elus`  |
+| `PAYLOAD_SECRET`         | clé de signature des sessions (`openssl rand -hex 32`)                |
+| `NEXT_PUBLIC_SERVER_URL` | `http://localhost:3000` en local                                      |
+
+`DB_PASSWORD` est lu par `docker-compose.yml` au premier démarrage du conteneur : il doit
+correspondre exactement au mot de passe présent dans `DATABASE_URL`. Si le volume a déjà été
+créé avec un autre mot de passe, il faut le supprimer (`docker compose down -v`) pour le
+réinitialiser.
+
+### Premier lancement
+
+1. Ouvrir `http://localhost:3000/admin` et créer le premier compte administrateur.
+2. `npm run seed` pour charger le jeu de démonstration (guides, PDF générés). Le seed est
+   rejouable : il remplace les documents existants au lieu d'empiler des doublons.
+
+Les fichiers uploadés (`/media`) ne sont pas versionnés : chaque poste a son propre dossier.
+
+## Commandes
+
+| Commande                   | Effet                                                       |
+| -------------------------- | ----------------------------------------------------------- |
+| `npm run dev`              | serveur de développement (Turbopack)                         |
+| `npm run devsafe`          | idem après suppression du cache `.next`                      |
+| `npm run generate:types`   | régénère `src/payload-types.ts` après tout changement de collection |
+| `npm run generate:importmap` | régénère la carte d'imports de l'admin après ajout d'un composant custom |
+| `npm run seed`             | jeu de données de démonstration                              |
+| `npm run test:int`         | tests d'intégration + unitaires (Vitest, base requise)       |
+| `npm run test:e2e`         | tests end-to-end (Playwright)                                |
+| `npm run lint`             | ESLint                                                       |
+| `npx tsc --noEmit`         | vérification TypeScript                                      |
+
+⚠️ `npm run test` échoue : le script appelle `pnpm`. Lancer `test:int` et `test:e2e` séparément.
+
+Avant un premier `npm run test:e2e` : `npx playwright install`.
+
+## Workflow Git
+
+Branche d'intégration : `dev`. Une branche par lot de travail (`feature/<sujet>`), PR vers
+`dev`, puis `dev` → `main`. Avant de pousser : `npm run generate:types`, `npx tsc --noEmit`,
+`npm run lint`, `npm run test:int`.
+
+## Dépannage
+
+- **`ECONNREFUSED ... 5433`** : le conteneur n'est pas lancé → `docker compose up -d`, puis
+  `docker compose ps` pour vérifier l'état `healthy`.
+- **Port 5433 déjà utilisé** : un autre PostgreSQL tourne, l'arrêter ou changer le port hôte
+  dans `docker-compose.yml` **et** dans `DATABASE_URL`.
+- **Types Payload désynchronisés** : `npm run generate:types`.
+- **Erreurs de peer deps à l'install** : `.npmrc` active déjà `legacy-peer-deps`, vérifier
+  qu'il est bien présent.
+- **Projet sur partition NTFS** : si une install npm semble incomplète, le signaler plutôt
+  que de contourner.
+
+---
+
+# Documentation du template Payload (référence)
 
 This template comes configured with the bare minimum to get started on anything you need.
 

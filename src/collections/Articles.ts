@@ -1,22 +1,7 @@
 import type { CollectionConfig } from 'payload'
-import {
-  BlockquoteFeature,
-  BlocksFeature,
-  BoldFeature,
-  FixedToolbarFeature,
-  HeadingFeature,
-  InlineToolbarFeature,
-  ItalicFeature,
-  LinkFeature,
-  OrderedListFeature,
-  ParagraphFeature,
-  UnorderedListFeature,
-  UploadFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 
 import { loggedIn, publishedOrLoggedIn } from '../access'
-import { Callout } from '../blocks/Callout'
+import { contentEditor } from '../fields/contentEditor'
 import { slugField } from '../fields/slug'
 import { ensureSingleFeaturedNews } from '../hooks/ensureSingleFeaturedNews'
 import { populatePublishedAt } from '../hooks/populatePublishedAt'
@@ -96,27 +81,7 @@ export const Articles: CollectionConfig = {
               type: 'richText',
               label: 'Corps de l’article',
               required: true,
-              editor: lexicalEditor({
-                // Jeu de fonctionnalités volontairement restreint à ce que
-                // demande le cahier des charges (§ 2.1).
-                features: () => [
-                  ParagraphFeature(),
-                  // H1 réservé au titre de la page.
-                  HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
-                  BoldFeature(),
-                  ItalicFeature(),
-                  UnorderedListFeature(),
-                  OrderedListFeature(),
-                  BlockquoteFeature(),
-                  LinkFeature({ enabledCollections: ['articles'] }),
-                  // `alt` est requis sur la collection media : toute image
-                  // insérée ici en possède un.
-                  UploadFeature({ enabledCollections: ['media'] }),
-                  BlocksFeature({ blocks: [Callout] }),
-                  FixedToolbarFeature(),
-                  InlineToolbarFeature(),
-                ],
-              }),
+              editor: contentEditor(),
             },
           ],
         },

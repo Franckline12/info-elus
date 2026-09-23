@@ -13,7 +13,7 @@ import NewsletterBlock from '@/components/NewsletterBlock'
 import SectionHeading from '@/components/SectionHeading'
 import VisuallyHidden from '@/components/VisuallyHidden'
 import { getArticles, getFeaturedOnHome } from '@/lib/queries/articles'
-import { getFeaturedGuides } from '@/lib/queries/guides'
+import { getGuidesForHome } from '@/lib/queries/guides'
 import { getTestimonial } from '@/lib/queries/testimonials'
 import { guidesPath } from '@/lib/routes'
 import { siteName, siteTagline } from '@/lib/site'
@@ -24,7 +24,7 @@ export const revalidate = 3600
 export default async function HomePage() {
   const [featured, guides, testimonial] = await Promise.all([
     getFeaturedOnHome(1),
-    getFeaturedGuides(8),
+    getGuidesForHome(8),
     getTestimonial(),
   ])
 

@@ -3,7 +3,6 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
-import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
 
 import AppLink from '@/components/AppLink'
 import MediaImage from '@/components/MediaImage'
@@ -26,6 +25,7 @@ export function GuideCard({ guide, priority = false }: Props) {
   const theme = asTheme(guide.theme)
   const href = guidePath(guide)
   const accent = themeColor(theme?.color)
+  const sectionCount = guide.sections?.length ?? 0
 
   return (
     <Card
@@ -74,22 +74,18 @@ export function GuideCard({ guide, priority = false }: Props) {
           </AppLink>
         </Typography>
 
-        {typeof guide.readingTime === 'number' && guide.readingTime > 0 ? (
+        {sectionCount > 0 ? (
           <Typography
             component="p"
             sx={{
               mt: 'auto',
               pt: 0.5,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
               fontSize: '0.8125rem',
               color: 'text.secondary',
               m: 0,
             }}
           >
-            <AccessTimeOutlinedIcon aria-hidden sx={{ fontSize: '0.95em', opacity: 0.8 }} />
-            {guide.readingTime} min de lecture
+            {sectionCount} section{sectionCount > 1 ? 's' : ''}
           </Typography>
         ) : null}
       </CardContent>
