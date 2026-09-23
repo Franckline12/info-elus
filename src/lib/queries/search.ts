@@ -8,8 +8,9 @@ import { getPayloadClient } from './payload'
 
 const PUBLISHED: Where = { _status: { equals: 'published' } }
 
-const matching = (term: string): Where => ({
-  or: [{ title: { like: term } }, { excerpt: { like: term } }],
+/** Les articles portent un chapô, les guides un résumé court. */
+const matching = (term: string, summaryField: 'excerpt' | 'summary'): Where => ({
+  or: [{ title: { like: term } }, { [summaryField]: { like: term } }],
 })
 
 export type SearchResults = {
@@ -28,14 +29,14 @@ export async function searchContent(term: string, limit = 10): Promise<SearchRes
   const [articles, guides] = await Promise.all([
     payload.find({
       collection: 'articles',
-      where: { and: [PUBLISHED, matching(trimmed)] },
+      where: { and: [PUBLISHED, matching(trimmed, 'excerpt')] },
       sort: '-publishedAt',
       depth: 1,
       limit,
     }),
     payload.find({
       collection: 'guides',
-      where: { and: [PUBLISHED, matching(trimmed)] },
+      where: { and: [PUBLISHED, matching(trimmed, 'summary')] },
       sort: '-publishedAt',
       depth: 1,
       limit,

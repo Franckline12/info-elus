@@ -1,43 +1,27 @@
-version: '3'
+# Base de données locale du projet.
+# Le nom de projet `infos-elus` est figé pour rester compatible avec le volume
+# et le conteneur existants (le dossier a été renommé en `info-elus` depuis).
+name: infos-elus
 
 services:
-  payload:
-    image: node:20-alpine
+  postgres:
+    image: postgres:17-alpine
+    container_name: infos-elus-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: infos_elus_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: infos_elus
+    # 5433 côté hôte pour ne pas entrer en conflit avec un PostgreSQL local.
     ports:
-      - '3000:3000'
+      - '5433:5432'
     volumes:
-      - .:/home/node/app
-      - node_modules:/home/node/app/node_modules
-    working_dir: /home/node/app/
-    command: sh -c "corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm dev"
-    depends_on:
-      - mongo
-      # - postgres
-    env_file:
-      - .env
-
-  # Ensure your DATABASE_URL uses 'mongo' as the hostname ie. mongodb://mongo/my-db-name
-  mongo:
-    image: mongo:latest
-    ports:
-      - '27017:27017'
-    command:
-      - --storageEngine=wiredTiger
-    volumes:
-      - data:/data/db
-    logging:
-      driver: none
-
-  # Uncomment the following to use postgres
-  # postgres:
-  #   restart: always
-  #   image: postgres:latest
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
+      - infos_elus_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U infos_elus_user -d infos_elus']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  data:
-  # pgdata:
-  node_modules:
+  infos_elus_data:

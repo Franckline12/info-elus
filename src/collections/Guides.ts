@@ -1,33 +1,23 @@
 import type { CollectionConfig } from 'payload'
-import {
-  BlockquoteFeature,
-  BlocksFeature,
-  BoldFeature,
-  FixedToolbarFeature,
-  HeadingFeature,
-  InlineToolbarFeature,
-  ItalicFeature,
-  LinkFeature,
-  OrderedListFeature,
-  ParagraphFeature,
-  UnorderedListFeature,
-  UploadFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
 
 import { loggedIn, publishedOrLoggedIn } from '../access'
-import { Callout } from '../blocks/Callout'
+import { contentEditor } from '../fields/contentEditor'
 import { slugField } from '../fields/slug'
 import { populatePublishedAt } from '../hooks/populatePublishedAt'
 import { revalidateContent } from '../hooks/revalidateContent'
-import { setReadingTime } from '../hooks/setReadingTime'
+import { uniqueSectionAnchors } from '../hooks/sectionAnchors'
 
 const { afterChange, afterDelete } = revalidateContent('/guides')
 
 /**
  * Fiches pratiques longues, structurées par thème (cahier des charges § 2.2).
- * Elles partagent la taxonomie des articles (tags) et ajoutent des ressources
- * téléchargeables (modèles, PV type).
+ *
+ * Contrairement aux articles, le corps n'est pas un bloc de texte unique mais
+ * une suite de sections : chacune porte son titre et son ancre, ce qui donne un
+ * sommaire interne fiable sans avoir à deviner la structure du texte.
+ *
+ * Les guides partagent la taxonomie des articles (tags) et ajoutent des
+ * ressources téléchargeables (modèles, PV type).
  */
 export const Guides: CollectionConfig = {
   slug: 'guides',
@@ -39,7 +29,7 @@ export const Guides: CollectionConfig = {
     group: 'Contenus',
     useAsTitle: 'title',
     defaultColumns: ['title', 'theme', '_status', 'publishedAt'],
-    listSearchableFields: ['title', 'excerpt'],
+    listSearchableFields: ['title', 'summary'],
   },
   access: {
     read: publishedOrLoggedIn,
@@ -54,11 +44,14 @@ export const Guides: CollectionConfig = {
     maxPerDoc: 50,
   },
   hooks: {
-    beforeChange: [populatePublishedAt, setReadingTime],
+    beforeValidate: [uniqueSectionAnchors],
+    beforeChange: [populatePublishedAt],
     afterChange: [afterChange],
     afterDelete: [afterDelete],
   },
   fields: [
+    // Le plugin SEO ajoute son onglet à la suite de ceux-ci : ce champ `tabs`
+    // doit rester en première position.
     {
       type: 'tabs',
       tabs: [
@@ -72,14 +65,14 @@ export const Guides: CollectionConfig = {
               required: true,
             },
             {
-              name: 'excerpt',
+              name: 'summary',
               type: 'textarea',
-              label: 'Résumé',
+              label: 'Résumé court',
               required: true,
               maxLength: 300,
               admin: {
                 description:
-                  'Résumé court affiché sous le titre et dans les listes. 300 caractères maximum.',
+                  'Affiché sous le titre, dans le listing et dans le rail de l’accueil. 300 caractères maximum.',
               },
             },
             {
@@ -88,31 +81,92 @@ export const Guides: CollectionConfig = {
               label: 'Image mise en avant',
               relationTo: 'media',
               admin: {
-                description: 'Illustration de tête, reprise dans le rail de l’accueil.',
+                description: 'Illustration de tête, reprise dans l’aperçu social.',
               },
             },
             {
-              name: 'content',
-              type: 'richText',
-              label: 'Corps du guide',
+              name: 'sections',
+              type: 'array',
+              label: 'Sections',
+              labels: {
+                singular: 'Section',
+                plural: 'Sections',
+              },
               required: true,
-              editor: lexicalEditor({
-                features: () => [
-                  ParagraphFeature(),
-                  // H1 réservé au titre de la page ; les h2 alimentent le sommaire.
-                  HeadingFeature({ enabledHeadingSizes: ['h2', 'h3', 'h4'] }),
-                  BoldFeature(),
-                  ItalicFeature(),
-                  UnorderedListFeature(),
-                  OrderedListFeature(),
-                  BlockquoteFeature(),
-                  LinkFeature({ enabledCollections: ['articles', 'guides'] }),
-                  UploadFeature({ enabledCollections: ['media'] }),
-                  BlocksFeature({ blocks: [Callout] }),
-                  FixedToolbarFeature(),
-                  InlineToolbarFeature(),
-                ],
-              }),
+              minRows: 1,
+              admin: {
+                initCollapsed: true,
+                description:
+                  'Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.',
+                components: {
+                  RowLabel: '@/components/admin/GuideSectionRowLabel#GuideSectionRowLabel',
+                },
+              },
+              fields: [
+                {
+                  name: 'heading',
+                  type: 'text',
+                  label: 'Titre de la section',
+                  required: true,
+                },
+                {
+                  name: 'anchor',
+                  type: 'text',
+                  label: 'Ancre',
+                  admin: {
+                    readOnly: true,
+                    description:
+                      'Dérivée du titre de la section, rendue unique automatiquement. Elle sert de lien dans le sommaire.',
+                  },
+                },
+                {
+                  name: 'content',
+                  type: 'richText',
+                  label: 'Contenu',
+                  required: true,
+                  editor: contentEditor({ linkTo: ['articles', 'guides'] }),
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Ressources',
+          fields: [
+            {
+              name: 'resources',
+              type: 'array',
+              label: 'Ressources téléchargeables',
+              labels: {
+                singular: 'Ressource',
+                plural: 'Ressources',
+              },
+              admin: {
+                description: 'Modèles, PV type… affichés en fin de guide.',
+              },
+              fields: [
+                {
+                  name: 'label',
+                  type: 'text',
+                  label: 'Intitulé',
+                  required: true,
+                },
+                {
+                  name: 'file',
+                  type: 'upload',
+                  label: 'Fichier',
+                  relationTo: 'media',
+                  required: true,
+                },
+                {
+                  name: 'description',
+                  type: 'text',
+                  label: 'Description',
+                  admin: {
+                    description: 'Précision facultative affichée sous l’intitulé.',
+                  },
+                },
+              ],
             },
           ],
         },
@@ -136,38 +190,6 @@ export const Guides: CollectionConfig = {
               label: 'Tags',
               relationTo: 'tags',
               hasMany: true,
-            },
-          ],
-        },
-        {
-          label: 'Ressources',
-          fields: [
-            {
-              name: 'resources',
-              type: 'array',
-              label: 'Ressources téléchargeables',
-              labels: {
-                singular: 'Ressource',
-                plural: 'Ressources',
-              },
-              admin: {
-                description: 'Modèles, PV type… affichés dans la colonne du guide.',
-              },
-              fields: [
-                {
-                  name: 'label',
-                  type: 'text',
-                  label: 'Intitulé',
-                  required: true,
-                },
-                {
-                  name: 'file',
-                  type: 'upload',
-                  label: 'Fichier',
-                  relationTo: 'media',
-                  required: true,
-                },
-              ],
             },
           ],
         },
@@ -197,16 +219,6 @@ export const Guides: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Les guides cochés ouvrent le rail « Guides CSE » de la page d’accueil.',
-      },
-    },
-    {
-      name: 'readingTime',
-      type: 'number',
-      label: 'Temps de lecture (min)',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Calculé automatiquement à partir du corps du guide.',
       },
     },
   ],

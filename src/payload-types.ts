@@ -298,43 +298,58 @@ export interface Guide {
   id: number;
   title: string;
   /**
-   * Résumé court affiché sous le titre et dans les listes. 300 caractères maximum.
+   * Affiché sous le titre, dans le listing et dans le rail de l’accueil. 300 caractères maximum.
    */
-  excerpt: string;
+  summary: string;
   /**
-   * Illustration de tête, reprise dans le rail de l’accueil.
+   * Illustration de tête, reprise dans l’aperçu social.
    */
   featuredImage?: (number | null) | Media;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
   /**
-   * Détermine la couleur de bordure du guide (§ 5.3).
+   * Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.
    */
-  theme: number | Theme;
-  tags?: (number | Tag)[] | null;
+  sections: {
+    heading: string;
+    /**
+     * Dérivée du titre de la section, rendue unique automatiquement. Elle sert de lien dans le sommaire.
+     */
+    anchor?: string | null;
+    content: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
   /**
-   * Modèles, PV type… affichés dans la colonne du guide.
+   * Modèles, PV type… affichés en fin de guide.
    */
   resources?:
     | {
         label: string;
         file: number | Media;
+        /**
+         * Précision facultative affichée sous l’intitulé.
+         */
+        description?: string | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Détermine la couleur de bordure du guide (§ 5.3).
+   */
+  theme: number | Theme;
+  tags?: (number | Tag)[] | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -355,10 +370,6 @@ export interface Guide {
    * Les guides cochés ouvrent le rail « Guides CSE » de la page d’accueil.
    */
   featuredOnHome?: boolean | null;
-  /**
-   * Calculé automatiquement à partir du corps du guide.
-   */
-  readingTime?: number | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -663,18 +674,26 @@ export interface ArticlesSelect<T extends boolean = true> {
  */
 export interface GuidesSelect<T extends boolean = true> {
   title?: T;
-  excerpt?: T;
+  summary?: T;
   featuredImage?: T;
-  content?: T;
-  theme?: T;
-  tags?: T;
+  sections?:
+    | T
+    | {
+        heading?: T;
+        anchor?: T;
+        content?: T;
+        id?: T;
+      };
   resources?:
     | T
     | {
         label?: T;
         file?: T;
+        description?: T;
         id?: T;
       };
+  theme?: T;
+  tags?: T;
   meta?:
     | T
     | {
@@ -685,7 +704,6 @@ export interface GuidesSelect<T extends boolean = true> {
   slug?: T;
   publishedAt?: T;
   featuredOnHome?: T;
-  readingTime?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

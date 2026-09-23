@@ -15,21 +15,24 @@ const asMedia = (value: Media | number | null | undefined): Media | null =>
   value && typeof value === 'object' ? value : null
 
 /**
- * Contenu éditorial doté des champs du plugin SEO : articles et guides partagent
- * exactement la même forme.
+ * Contenu éditorial doté des champs du plugin SEO. Articles et guides partagent
+ * la même forme, au résumé près : chapô (`excerpt`) pour les premiers, résumé
+ * court (`summary`) pour les seconds.
  */
-type SeoContent = Pick<Article | Guide, 'title' | 'excerpt' | 'featuredImage' | 'updatedAt'> & {
+type SeoContent = Pick<Article | Guide, 'title' | 'featuredImage' | 'updatedAt'> & {
+  excerpt?: string | null
+  summary?: string | null
   meta?: Article['meta']
   publishedAt?: string | null
 }
 
 /**
  * Métadonnées d'une page de contenu : champs SEO du CMS en priorité, repli sur
- * `title`, `excerpt` et `featuredImage` (§ 4.3).
+ * `title`, le résumé et `featuredImage` (§ 4.3).
  */
 export function contentMetadata(article: SeoContent, path: string): Metadata {
   const title = stripSiteSuffix(article.meta?.title || article.title)
-  const description = article.meta?.description || article.excerpt
+  const description = article.meta?.description || article.excerpt || article.summary || undefined
   const image = asMedia(article.meta?.image) ?? asMedia(article.featuredImage)
   const url = absoluteUrl(path)
 
