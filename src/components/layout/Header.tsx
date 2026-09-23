@@ -1,72 +1,51 @@
 import Box from '@mui/material/Box'
-import Divider from '@mui/material/Divider'
 import Typography from '@mui/material/Typography'
 
 import AppLink from '@/components/AppLink'
-
 import Container from '@/components/Container'
 import { navItems, siteName, siteTagline } from '@/lib/site'
-import { fonts } from '@/theme/tokens'
+import { colors, fonts, rule } from '@/theme/tokens'
 
 import SiteNav from './SiteNav'
 
 /**
- * Masthead de journal plutôt qu'une AppBar Material : pas de barre colorée, pas
- * d'ombre, juste un logotype, sa signature et deux filets encadrant la navigation.
+ * Masthead de journal plutôt qu'une AppBar Material : une seule barre sur fond
+ * papier surélevé, un logotype signé, la navigation et l'appel à l'action
+ * newsletter, le tout fermé par un filet fin.
  */
 export function Header() {
   return (
-    <Box component="header" sx={{ bgcolor: 'background.default' }}>
+    <Box component="header" sx={{ bgcolor: colors.paperRaised, borderBottom: `1px solid ${rule}` }}>
       <Container>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            alignItems: { xs: 'flex-start', sm: 'baseline' },
-            justifyContent: 'space-between',
-            gap: { xs: 0.5, sm: 3 },
-            pt: { xs: 2.5, md: 4 },
-            pb: { xs: 2, md: 3 },
-          }}
-        >
-          <AppLink href="/" underline="none" sx={{ color: 'text.primary' }}>
+        <SiteNav items={navItems}>
+          <AppLink href="/" underline="none" sx={{ color: 'text.primary', flexShrink: 0 }}>
             <Typography
               component="span"
               sx={{
                 display: 'block',
                 fontFamily: fonts.sans,
-                fontSize: 'clamp(1.75rem, 1.1rem + 2.6vw, 3rem)',
+                fontSize: { xs: '1.25rem', md: '1.5rem' },
                 fontWeight: 700,
-                lineHeight: 1,
+                lineHeight: 1.1,
                 letterSpacing: '-0.03em',
               }}
             >
               {siteName}
             </Typography>
+            <Typography
+              component="span"
+              sx={{
+                display: 'block',
+                fontSize: { xs: '0.6875rem', md: '0.75rem' },
+                color: 'text.secondary',
+                lineHeight: 1.2,
+              }}
+            >
+              {siteTagline}
+            </Typography>
           </AppLink>
-
-          <Typography
-            component="p"
-            sx={{
-              fontFamily: fonts.serif,
-              fontStyle: 'italic',
-              fontSize: { xs: '0.9375rem', md: '1.0625rem' },
-              color: 'text.secondary',
-              m: 0,
-            }}
-          >
-            {siteTagline}
-          </Typography>
-        </Box>
+        </SiteNav>
       </Container>
-
-      <Divider />
-
-      <Container>
-        <SiteNav items={navItems} />
-      </Container>
-
-      <Divider />
     </Box>
   )
 }

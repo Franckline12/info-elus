@@ -22,9 +22,10 @@ type Props = {
   page: number
   totalPages: number
   categorySlug?: string
+  tagSlug?: string
 }
 
-export function PaginationLinks({ type, page, totalPages, categorySlug }: Props) {
+export function PaginationLinks({ type, page, totalPages, categorySlug, tagSlug }: Props) {
   if (totalPages <= 1) return null
 
   return (
@@ -44,7 +45,7 @@ export function PaginationLinks({ type, page, totalPages, categorySlug }: Props)
         renderItem={(item) => (
           <PaginationItem
             component={NextLink}
-            href={listingPagePath(type, { page: item.page ?? 1, categorySlug })}
+            href={listingPagePath(type, { page: item.page ?? 1, categorySlug, tagSlug })}
             {...item}
           />
         )}

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
       {
         pathname: '/api/media/file/**',
       },
+      // Bandeaux de rubrique servis depuis `public/images`.
+      {
+        pathname: '/images/**',
+      },
     ],
   },
   webpack: (webpackConfig) => {

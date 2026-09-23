@@ -1,4 +1,6 @@
-import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
+
+import { colors } from '@/theme/tokens'
 
 import AppLink from './AppLink'
 
@@ -6,31 +8,37 @@ type Props = {
   name: string
   /** Absent : la catégorie s'affiche sans lien (page de listing déjà filtrée). */
   href?: string
+  /**
+   * `blue` (défaut) pour les vignettes et les listes ; `sand` pour l'en-tête
+   * d'un contenu, comme sur la maquette de la page article.
+   */
+  tone?: 'blue' | 'sand'
 }
 
-const styles = {
-  display: 'inline-block',
-  fontSize: '0.75rem',
-  fontWeight: 500,
-  lineHeight: 1.3,
-  letterSpacing: '0.09em',
-  textTransform: 'uppercase' as const,
-  color: 'primary.main',
-}
+const TONES = {
+  blue: { backgroundColor: colors.bluePale, color: colors.blueMid },
+  sand: { backgroundColor: colors.sandPale, color: colors.ink },
+} as const
 
-/** Surtitre de rubrique : capitales espacées, pas de pastille arrondie. */
-export function CategoryLabel({ name, href }: Props) {
-  if (!href) {
-    return (
-      <Typography component="span" sx={styles}>
-        {name}
-      </Typography>
-    )
-  }
+/**
+ * Badge de rubrique : rectangle très légèrement adouci sur fond pâle, jamais une
+ * pilule Material. Sert aussi bien aux catégories qu'aux thèmes de guide.
+ */
+export function CategoryLabel({ name, href, tone = 'blue' }: Props) {
+  const chip = <Chip label={name} size="small" sx={TONES[tone]} />
+
+  if (!href) return chip
 
   return (
-    <AppLink href={href} sx={styles}>
-      {name}
+    <AppLink
+      href={href}
+      underline="none"
+      sx={{
+        display: 'inline-flex',
+        '&:hover .MuiChip-root': { backgroundColor: colors.blueBright, color: '#FFFFFF' },
+      }}
+    >
+      {chip}
     </AppLink>
   )
 }

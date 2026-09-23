@@ -13,6 +13,10 @@ import { Categories } from './collections/Categories'
 import { Themes } from './collections/Themes'
 import { Tags } from './collections/Tags'
 import { Articles } from './collections/Articles'
+import { Guides } from './collections/Guides'
+import { Quizzes } from './collections/Quizzes'
+import { Providers } from './collections/Providers'
+import { Testimonials } from './collections/Testimonials'
 import type { Article } from './payload-types'
 import { fr } from '@payloadcms/translations/languages/fr'
 
@@ -30,7 +34,18 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Categories, Themes, Tags, Articles],
+  collections: [
+    Users,
+    Media,
+    Categories,
+    Themes,
+    Tags,
+    Articles,
+    Guides,
+    Quizzes,
+    Providers,
+    Testimonials,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -44,7 +59,7 @@ export default buildConfig({
   sharp,
   plugins: [
     seoPlugin({
-      collections: ['articles'],
+      collections: ['articles', 'guides'],
       tabbedUI: true,
       uploadsCollection: 'media',
       generateTitle,

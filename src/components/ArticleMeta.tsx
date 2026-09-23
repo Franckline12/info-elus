@@ -1,7 +1,10 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
+import UpdateOutlinedIcon from '@mui/icons-material/UpdateOutlined'
 
-import { formatLongDate, toDate, toDateTimeAttribute } from '@/lib/formatDate'
+import { formatLongDate, formatMediumDate, toDate, toDateTimeAttribute } from '@/lib/formatDate'
 
 type Props = {
   publishedAt?: string | null
@@ -9,6 +12,13 @@ type Props = {
   readingTime?: number | null
   /** Au-delà de cet écart, la date de mise à jour est jugée significative. */
   updateThresholdHours?: number
+  /**
+   * `compact` : icônes et date abrégée, pour les vignettes et les bandeaux.
+   * `default` : phrases complètes, pour l'en-tête d'un contenu.
+   */
+  variant?: 'default' | 'compact'
+  /** Hérite de la couleur ambiante : utile sur les fonds bleu profond. */
+  inherit?: boolean
 }
 
 /**
@@ -21,35 +31,60 @@ export function ArticleMeta({
   updatedAt,
   readingTime,
   updateThresholdHours = 24,
+  variant = 'default',
+  inherit = false,
 }: Props) {
   const published = toDate(publishedAt)
   const updated = toDate(updatedAt)
+  const compact = variant === 'compact'
 
   const showUpdated =
     published !== null &&
     updated !== null &&
     updated.getTime() - published.getTime() > updateThresholdHours * 3600 * 1000
 
+  const iconStyles = { fontSize: '0.95em', opacity: 0.8 }
   const parts: React.ReactNode[] = []
+
+  if (typeof readingTime === 'number' && readingTime > 0) {
+    parts.push(
+      <Box
+        component="span"
+        key="reading"
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <AccessTimeOutlinedIcon aria-hidden sx={iconStyles} />
+        {readingTime} min de lecture
+      </Box>,
+    )
+  }
 
   if (published) {
     parts.push(
-      <Box component="time" key="published" dateTime={toDateTimeAttribute(published)}>
-        Publié le {formatLongDate(published)}
+      <Box
+        component="time"
+        key="published"
+        dateTime={toDateTimeAttribute(published)}
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <CalendarTodayOutlinedIcon aria-hidden sx={iconStyles} />
+        {compact ? formatMediumDate(published) : `Publié le ${formatLongDate(published)}`}
       </Box>,
     )
   }
 
   if (showUpdated) {
     parts.push(
-      <Box component="time" key="updated" dateTime={toDateTimeAttribute(updated)}>
-        Mis à jour le {formatLongDate(updated)}
+      <Box
+        component="time"
+        key="updated"
+        dateTime={toDateTimeAttribute(updated)}
+        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
+      >
+        <UpdateOutlinedIcon aria-hidden sx={iconStyles} />
+        {compact ? `MàJ ${formatMediumDate(updated)}` : `Mis à jour le ${formatLongDate(updated)}`}
       </Box>,
     )
-  }
-
-  if (typeof readingTime === 'number' && readingTime > 0) {
-    parts.push(<span key="reading">{readingTime} min de lecture</span>)
   }
 
   if (parts.length === 0) return null
@@ -62,8 +97,9 @@ export function ArticleMeta({
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        gap: 1,
-        color: 'text.secondary',
+        gap: compact ? 1.5 : 1,
+        fontSize: compact ? '0.8125rem' : undefined,
+        color: inherit ? 'inherit' : 'text.secondary',
         m: 0,
       }}
     >
@@ -77,8 +113,8 @@ export function ArticleMeta({
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 1,
-            '&:not(:last-of-type)::after': { content: '"·"', opacity: 0.6 },
+            gap: compact ? 1.5 : 1,
+            ...(compact ? {} : { '&:not(:last-of-type)::after': { content: '"·"', opacity: 0.6 } }),
           }}
         >
           {part}

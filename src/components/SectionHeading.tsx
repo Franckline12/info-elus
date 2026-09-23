@@ -1,9 +1,8 @@
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 
 import AppLink from './AppLink'
-
-import { rule } from '@/theme/tokens'
 
 type Props = {
   title: string
@@ -15,8 +14,8 @@ type Props = {
 }
 
 /**
- * Titre de section surmonté d'un filet épais et souligné d'un filet fin :
- * la signature typographique des rubriques d'un journal.
+ * Titre de rubrique de la maquette : libellé en gras à gauche, lien de renvoi
+ * vers le listing à droite. Les filets sont portés par les sections elles-mêmes.
  */
 export function SectionHeading({
   title,
@@ -26,35 +25,42 @@ export function SectionHeading({
   id,
 }: Props) {
   return (
-    <Box sx={{ borderTop: `2px solid currentColor`, color: 'text.primary', mb: 3 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: 2,
-          borderBottom: `1px solid ${rule}`,
-          py: 1,
-        }}
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 2,
+        mb: { xs: 2, md: 2.5 },
+      }}
+    >
+      <Typography
+        id={id}
+        component={component}
+        variant="h3"
+        sx={{ fontSize: { xs: '1.25rem', md: '1.375rem' }, letterSpacing: '-0.01em', m: 0 }}
       >
-        <Typography
-          id={id}
-          component={component}
-          variant="h3"
-          sx={{ letterSpacing: '0.01em', m: 0 }}
+        {title}
+      </Typography>
+
+      {href ? (
+        <AppLink
+          href={href}
+          underline="hover"
+          sx={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 0.5,
+            flexShrink: 0,
+            color: 'primary.main',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+          }}
         >
-          {title}
-        </Typography>
-        {href ? (
-          <AppLink
-            href={href}
-            variant="body2"
-            sx={{ color: 'primary.main', fontWeight: 500, flexShrink: 0 }}
-          >
-            {linkLabel}
-          </AppLink>
-        ) : null}
-      </Box>
+          {linkLabel}
+          <ArrowForwardIcon aria-hidden sx={{ fontSize: '0.95em' }} />
+        </AppLink>
+      ) : null}
     </Box>
   )
 }
