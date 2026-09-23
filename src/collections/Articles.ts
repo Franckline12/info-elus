@@ -20,6 +20,7 @@ import { Callout } from '../blocks/Callout'
 import { slugField } from '../fields/slug'
 import { ensureSingleFeaturedNews } from '../hooks/ensureSingleFeaturedNews'
 import { populatePublishedAt } from '../hooks/populatePublishedAt'
+import { revalidateArticle, revalidateArticleDelete } from '../hooks/revalidateArticle'
 import { setReadingTime } from '../hooks/setReadingTime'
 
 /**
@@ -52,7 +53,8 @@ export const Articles: CollectionConfig = {
   },
   hooks: {
     beforeChange: [populatePublishedAt, setReadingTime],
-    afterChange: [ensureSingleFeaturedNews],
+    afterChange: [ensureSingleFeaturedNews, revalidateArticle],
+    afterDelete: [revalidateArticleDelete],
   },
   fields: [
     // Le plugin SEO ajoute son onglet à la suite de ceux-ci : ce champ `tabs`

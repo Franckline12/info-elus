@@ -11,7 +11,9 @@ relis la section concernée avant chaque tâche.
 - PostgreSQL 17 dans Docker (`docker-compose.yml`, conteneur `infos-elus-db`, port hôte 5433)
 - Variable de connexion : `DATABASE_URL` dans `.env` (ne jamais committer `.env`)
 - TypeScript strict, `moduleResolution: bundler`
-- Tailwind CSS pour le front public
+- Material UI (MUI) + Emotion pour le front public, intégré via `@mui/material-nextjs`
+  (thème dans `src/theme/theme.ts`, jetons partagés dans `src/theme/tokens.ts`).
+  Pas de Tailwind. Icônes : importées une par une depuis `@mui/icons-material/<Nom>`
 - Admin Payload en français (`i18n` dans `payload.config.ts`)
 - La skill Payload est installée dans le projet : consulte-la pour les conventions Payload
 
