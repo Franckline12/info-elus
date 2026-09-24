@@ -46,5 +46,26 @@ export const fonts = {
  */
 export const radius = 20
 
+/**
+ * Élévation au survol des vignettes de listing (articles, guides) : ombre
+ * d'encre très diluée et léger décalage, jamais de halo coloré. C'est la seule
+ * entorse au « pas d'ombre » du § 5.1, réservée à l'état de survol.
+ */
+export const hoverShadow = 'rgba(16, 21, 43, 0.14)'
+
+/** Survol commun des vignettes cliquables : élévation neutre, bordure filet. */
+export const cardHoverSx = {
+  transition: 'box-shadow 160ms ease, transform 160ms ease, border-color 160ms ease',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    borderColor: rule,
+    boxShadow: `0 6px 18px ${hoverShadow}`,
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    transition: 'none',
+    '&:hover': { transform: 'none' },
+  },
+}
+
 /** Longueur de ligne confortable pour le corps de texte (~70 caractères). */
 export const measure = '68ch'

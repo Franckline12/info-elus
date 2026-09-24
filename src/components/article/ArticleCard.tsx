@@ -9,6 +9,7 @@ import CategoryLabel from '@/components/CategoryLabel'
 import MediaImage from '@/components/MediaImage'
 import { articlePath, categoryPath } from '@/lib/routes'
 import type { Article, Category } from '@/payload-types'
+import { cardHoverSx } from '@/theme/tokens'
 
 type Props = {
   article: Article
@@ -22,8 +23,9 @@ const asCategory = (value: Article['category']): Category | null =>
   value && typeof value === 'object' ? value : null
 
 /**
- * Vignette de listing : surface papier surélevé, bordure fine, aucune ombre —
- * la carte de la maquette (sections « Guides CSE » et « Articles récents »).
+ * Vignette de listing : surface papier surélevé, bordure fine — la carte de la
+ * maquette (sections « Guides CSE » et « Articles récents »). Au survol, elle se
+ * détache par une élévation neutre (`cardHoverSx`), sans bordure bleue.
  */
 export function ArticleCard({
   article,
@@ -42,8 +44,7 @@ export function ArticleCard({
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        transition: 'border-color 120ms ease',
-        '&:hover': { borderColor: 'primary.main' },
+        ...cardHoverSx,
       }}
     >
       {showImage && article.featuredImage ? (
