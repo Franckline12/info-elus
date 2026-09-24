@@ -1,5 +1,6 @@
 import type { PaginatedDocs, Where } from 'payload'
 
+import type { FacetCounts } from '@/lib/filterOptions'
 import type { Guide, Theme } from '@/payload-types'
 
 import { getPayloadClient } from './payload'
@@ -55,6 +56,37 @@ export async function getGuides({
     page,
     limit,
   })
+}
+
+/**
+ * Nombre de guides publiés par thème, à recherche constante : les compteurs du
+ * filtre. Le thème actif n'entre pas dans le calcul, sinon toutes les autres
+ * options annonceraient zéro.
+ */
+export async function countGuidesByTheme({ search }: { search?: string } = {}): Promise<FacetCounts> {
+  const payload = await getPayloadClient()
+  const themes = await getThemes()
+
+  const clauses: Where[] = []
+  if (search) clauses.push({ or: [{ title: { like: search } }, { summary: { like: search } }] })
+
+  const count = (extra?: Where) =>
+    payload.count({
+      collection: 'guides',
+      where: publishedWhere(...clauses, ...(extra ? [extra] : [])),
+    })
+
+  const [all, ...perTheme] = await Promise.all([
+    count(),
+    ...themes.map((theme) => count({ 'theme.slug': { equals: theme.slug } })),
+  ])
+
+  return {
+    total: all.totalDocs,
+    byValue: Object.fromEntries(
+      themes.map((theme, index) => [theme.slug ?? '', perTheme[index].totalDocs]),
+    ),
+  }
 }
 
 /**
