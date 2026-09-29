@@ -75,6 +75,7 @@ export interface Config {
     articles: Article;
     guides: Guide;
     quizzes: Quiz;
+    'quiz-results': QuizResult;
     providers: Provider;
     testimonials: Testimonial;
     'payload-kv': PayloadKv;
@@ -92,6 +93,7 @@ export interface Config {
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     guides: GuidesSelect<false> | GuidesSelect<true>;
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
+    'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -382,10 +384,20 @@ export interface Quiz {
   id: number;
   title: string;
   /**
-   * Phrase d’accroche affichée avant de lancer le quiz.
+   * Phrase d’accroche affichée avant de lancer le quiz et reprise dans la vignette du listing. 300 caractères maximum.
    */
-  excerpt: string;
-  theme?: (number | null) | Theme;
+  intro?: string | null;
+  /**
+   * Classe le quiz dans la même taxonomie que les guides.
+   */
+  theme: number | Theme;
+  /**
+   * Lundi de la semaine concernée. Le quiz mis en avant est le plus récent dont la semaine est arrivée.
+   */
+  week: string;
+  /**
+   * Chaque question doit compter au moins deux réponses proposées et une seule réponse correcte.
+   */
   questions: {
     prompt: string;
     options: {
@@ -394,11 +406,23 @@ export interface Quiz {
       id?: string | null;
     }[];
     /**
-     * Affichée après validation de la réponse. Facultative.
+     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz.
      */
     explanation?: string | null;
+    /**
+     * Laissez 1 sauf si la question doit peser davantage dans le score.
+     */
+    points?: number | null;
     id?: string | null;
   }[];
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
@@ -410,6 +434,31 @@ export interface Quiz {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-results".
+ */
+export interface QuizResult {
+  id: number;
+  quiz: number | Quiz;
+  /**
+   * Points obtenus, recalculés par le serveur.
+   */
+  score: number;
+  /**
+   * Points maximum du quiz au moment de la partie.
+   */
+  total: number;
+  /**
+   * Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.
+   */
+  cseName?: string | null;
+  playedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -516,6 +565,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'quizzes';
         value: number | Quiz;
+      } | null)
+    | ({
+        relationTo: 'quiz-results';
+        value: number | QuizResult;
       } | null)
     | ({
         relationTo: 'providers';
@@ -714,8 +767,9 @@ export interface GuidesSelect<T extends boolean = true> {
  */
 export interface QuizzesSelect<T extends boolean = true> {
   title?: T;
-  excerpt?: T;
+  intro?: T;
   theme?: T;
+  week?: T;
   questions?:
     | T
     | {
@@ -728,13 +782,34 @@ export interface QuizzesSelect<T extends boolean = true> {
               id?: T;
             };
         explanation?: T;
+        points?: T;
         id?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
       };
   slug?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-results_select".
+ */
+export interface QuizResultsSelect<T extends boolean = true> {
+  quiz?: T;
+  score?: T;
+  total?: T;
+  cseName?: T;
+  playedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

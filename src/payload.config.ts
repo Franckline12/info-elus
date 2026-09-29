@@ -15,6 +15,7 @@ import { Tags } from './collections/Tags'
 import { Articles } from './collections/Articles'
 import { Guides } from './collections/Guides'
 import { Quizzes } from './collections/Quizzes'
+import { QuizResults } from './collections/QuizResults'
 import { Providers } from './collections/Providers'
 import { Testimonials } from './collections/Testimonials'
 import { fr } from '@payloadcms/translations/languages/fr'
@@ -24,18 +25,20 @@ const dirname = path.dirname(filename)
 
 /**
  * Forme commune aux contenus indexables : les articles portent un chapô
- * (`excerpt`), les guides un résumé court (`summary`).
+ * (`excerpt`), les guides un résumé court (`summary`), les quiz une
+ * introduction (`intro`).
  */
 type SeoDoc = {
   title?: string | null
   excerpt?: string | null
   summary?: string | null
+  intro?: string | null
 }
 
 const generateTitle: GenerateTitle<SeoDoc> = ({ doc }) => `${doc?.title ?? ''} — Infos Élus`
 
 const generateDescription: GenerateDescription<SeoDoc> = ({ doc }) =>
-  doc?.excerpt ?? doc?.summary ?? ''
+  doc?.excerpt ?? doc?.summary ?? doc?.intro ?? ''
 
 export default buildConfig({
   admin: {
@@ -53,6 +56,7 @@ export default buildConfig({
     Articles,
     Guides,
     Quizzes,
+    QuizResults,
     Providers,
     Testimonials,
   ],
@@ -69,7 +73,7 @@ export default buildConfig({
   sharp,
   plugins: [
     seoPlugin({
-      collections: ['articles', 'guides'],
+      collections: ['articles', 'guides', 'quizzes'],
       tabbedUI: true,
       uploadsCollection: 'media',
       generateTitle,

@@ -14,18 +14,18 @@ import Pagination from '@mui/material/Pagination'
 import PaginationItem from '@mui/material/PaginationItem'
 import NextLink from 'next/link'
 
-import type { ContentType } from '@/lib/routes'
-import { listingPagePath } from '@/lib/routes'
+import { pagePath } from '@/lib/routes'
 
 type Props = {
-  type: ContentType
+  /** Chemin du listing, sans paramètres : `/articles`, `/jeux-quiz`… */
+  basePath: string
   page: number
   totalPages: number
-  categorySlug?: string
-  tagSlug?: string
+  /** Filtres actifs à conserver d'une page à l'autre. */
+  params?: Record<string, string | undefined>
 }
 
-export function PaginationLinks({ type, page, totalPages, categorySlug, tagSlug }: Props) {
+export function PaginationLinks({ basePath, page, totalPages, params }: Props) {
   if (totalPages <= 1) return null
 
   return (
@@ -45,7 +45,7 @@ export function PaginationLinks({ type, page, totalPages, categorySlug, tagSlug 
         renderItem={(item) => (
           <PaginationItem
             component={NextLink}
-            href={listingPagePath(type, { page: item.page ?? 1, categorySlug, tagSlug })}
+            href={pagePath(basePath, item.page ?? 1, params)}
             {...item}
           />
         )}

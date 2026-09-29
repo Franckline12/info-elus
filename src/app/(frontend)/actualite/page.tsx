@@ -19,7 +19,7 @@ import TagList from '@/components/TagList'
 import { getArticles, getFeaturedNews } from '@/lib/queries/articles'
 import { getCategories } from '@/lib/queries/categories'
 import { getTags } from '@/lib/queries/tags'
-import { listingPagePath, tagPath } from '@/lib/routes'
+import { listingPagePath, listingPath, parsePage, tagPath } from '@/lib/routes'
 
 const PER_PAGE = 10
 
@@ -31,11 +31,6 @@ export const metadata: Metadata = {
 
 type Props = {
   searchParams: Promise<{ categorie?: string; tag?: string; page?: string }>
-}
-
-const parsePage = (value?: string): number => {
-  const page = Number.parseInt(value ?? '1', 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
 }
 
 export default async function ActualitePage({ searchParams }: Props) {
@@ -128,11 +123,10 @@ export default async function ActualitePage({ searchParams }: Props) {
           ) : null}
 
           <PaginationLinks
-            type="news"
+            basePath={listingPath('news')}
             page={result.page ?? 1}
             totalPages={result.totalPages}
-            categorySlug={categorie}
-            tagSlug={tag}
+            params={{ categorie, tag }}
           />
         </Grid>
 

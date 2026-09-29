@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 
 import config from '../payload.config'
 import { seedGuides } from './guides'
+import { seedQuizzes } from './quizzes'
 
 /**
  * Jeu de données de démonstration, exécuté par `npm run seed`.
@@ -14,6 +15,9 @@ const seed = async () => {
 
   payload.logger.info('Seed : guides')
   await seedGuides(payload)
+
+  payload.logger.info('Seed : quiz')
+  await seedQuizzes(payload)
 
   payload.logger.info('Seed terminé.')
   process.exit(0)

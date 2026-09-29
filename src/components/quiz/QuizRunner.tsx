@@ -2,12 +2,20 @@
 
 /**
  * Parcours de jeu d'un quiz (§ 2.5) : une question à la fois, retour immédiat,
- * score final. Composant client — c'est une interaction, pas du contenu.
- * Aucun score n'est envoyé au serveur : la collection ne stocke rien pour
- * l'instant (pas de classement en V1).
+ * score et récapitulatif en fin de parcours.
+ *
+ * Composant client — c'est une interaction, pas du contenu. Il ne reçoit qu'un
+ * `PlayableQuiz` : ni `isCorrect`, ni explication. La correction est demandée à
+ * `/api/quiz/answer` après chaque réponse, ce qui garantit que le code source
+ * de la page ne contient pas les solutions.
+ *
+ * La partie terminée est enregistrée anonymement par `/api/quiz/result` (quiz,
+ * score, barème, horodatage) : c'est la source du compteur communautaire. Rien
+ * qui identifie le joueur n'est transmis.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -22,51 +30,142 @@ import Typography from '@mui/material/Typography'
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import HighlightOffIcon from '@mui/icons-material/HighlightOff'
 
-import type { Quiz } from '@/payload-types'
+import AppLink from '@/components/AppLink'
+import type { PlayableQuiz } from '@/lib/quiz/playable'
+import { quizzesPath } from '@/lib/routes'
 import { colors, radius, surfaceBorder } from '@/theme/tokens'
 
 type Props = {
-  quiz: Quiz
+  quiz: PlayableQuiz
+  /** Quiz proposé depuis l'écran final, pour prolonger la partie. */
+  nextQuiz?: { slug: string; title: string } | null
 }
+
+/** Correction d'une question, telle que renvoyée par l'API. */
+type Feedback = {
+  correctIndex: number
+  isCorrect: boolean
+  points: number
+  explanation: string | null
+}
+
+/** Réponse du joueur, une fois corrigée par le serveur. */
+type PlayedAnswer = Feedback & { answer: number }
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'throttled'
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F']
 
-export function QuizRunner({ quiz }: Props) {
-  const questions = useMemo(() => quiz.questions ?? [], [quiz.questions])
+/** Transitions coupées pour qui a demandé moins de mouvement (§ 4.5). */
+const REDUCED_MOTION = '@media (prefers-reduced-motion: reduce)'
+
+export function QuizRunner({ quiz, nextQuiz = null }: Props) {
+  const questions = quiz.questions
 
   const [index, setIndex] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
-  const [validated, setValidated] = useState(false)
-  const [score, setScore] = useState(0)
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [played, setPlayed] = useState<PlayedAnswer[]>([])
   const [finished, setFinished] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+
+  /**
+   * Garde-fou contre le double envoi : un double clic sur « Voir mon score »
+   * ne doit pas compter deux parties dans le compteur communautaire.
+   */
+  const savingRef = useRef(false)
 
   const question = questions[index]
   const options = question?.options ?? []
-  const correctIndex = options.findIndex((option) => option.isCorrect)
-  const isCorrect = validated && selected === correctIndex
+  const score = played.reduce((sum, answer) => sum + (answer.isCorrect ? answer.points : 0), 0)
+  const correctCount = played.filter((answer) => answer.isCorrect).length
 
-  const validate = useCallback(() => {
-    if (selected === null) return
-    setValidated(true)
-    if (selected === correctIndex) setScore((value) => value + 1)
-  }, [correctIndex, selected])
+  const validate = useCallback(async () => {
+    if (selected === null || pending || feedback) return
+
+    setPending(true)
+    setError(null)
+
+    try {
+      const response = await fetch('/api/quiz/answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quizId: quiz.id, question: index, answer: selected }),
+      })
+
+      if (!response.ok) {
+        setError(
+          response.status === 429
+            ? 'Trop de réponses envoyées coup sur coup. Patientez quelques instants, puis réessayez.'
+            : 'La correction n’a pas pu être récupérée. Réessayez.',
+        )
+        return
+      }
+
+      const result = (await response.json()) as Feedback
+
+      setFeedback(result)
+      setPlayed((list) => [...list, { ...result, answer: selected }])
+    } catch {
+      setError('Correction indisponible : vérifiez votre connexion, puis réessayez.')
+    } finally {
+      setPending(false)
+    }
+  }, [feedback, index, pending, quiz.id, selected])
+
+  /** Enregistre la partie terminée. Le serveur recalcule le score lui-même. */
+  const save = useCallback(
+    async (answers: number[]) => {
+      if (savingRef.current) return
+      savingRef.current = true
+      setSaveState('saving')
+
+      try {
+        const response = await fetch('/api/quiz/result', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quizId: quiz.id, answers }),
+        })
+
+        if (response.status === 429) {
+          setSaveState('throttled')
+          return
+        }
+
+        setSaveState(response.ok ? 'saved' : 'error')
+      } catch {
+        setSaveState('error')
+      }
+    },
+    [quiz.id],
+  )
 
   const next = useCallback(() => {
     if (index + 1 >= questions.length) {
       setFinished(true)
+      // L'enregistrement part de l'action du joueur, pas d'un effet : le bouton
+      // n'existe qu'une fois la dernière question corrigée, donc `played`
+      // contient déjà toutes les réponses à cet instant.
+      void save(played.map((answer) => answer.answer))
       return
     }
     setIndex((value) => value + 1)
     setSelected(null)
-    setValidated(false)
-  }, [index, questions.length])
+    setFeedback(null)
+    setError(null)
+  }, [index, played, questions.length, save])
 
   const restart = useCallback(() => {
+    savingRef.current = false
     setIndex(0)
     setSelected(null)
-    setValidated(false)
-    setScore(0)
+    setFeedback(null)
+    setError(null)
+    setPlayed([])
     setFinished(false)
+    setSaveState('idle')
   }, [])
 
   if (questions.length === 0 || !question) {
@@ -82,23 +181,138 @@ export function QuizRunner({ quiz }: Props) {
   }
 
   if (finished) {
+    const perfect = score === quiz.totalPoints
+
     return (
       <Card>
-        <CardContent sx={{ textAlign: 'center', py: { xs: 4, md: 6 } }}>
-          <Typography component="p" variant="overline" sx={{ color: 'text.secondary' }}>
-            Score final
-          </Typography>
-          <Typography component="p" sx={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.1 }}>
-            {score} / {questions.length}
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, mb: 3 }}>
-            {score === questions.length
-              ? 'Sans faute : vos connaissances sont à jour.'
-              : 'Rejouez le quiz pour consolider les réponses manquées.'}
-          </Typography>
-          <Button onClick={restart} color="accentQuiz" variant="contained">
-            Rejouer le quiz
-          </Button>
+        <CardContent sx={{ p: { xs: 2.5, md: 4 } }}>
+          <Box sx={{ textAlign: 'center', pb: { xs: 2, md: 3 } }}>
+            <Typography component="p" variant="overline" sx={{ color: 'text.secondary' }}>
+              Score final
+            </Typography>
+            <Typography
+              component="p"
+              sx={{ fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.1, m: 0 }}
+            >
+              {score} / {quiz.totalPoints}
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, m: 0 }}>
+              {correctCount} bonne{correctCount > 1 ? 's' : ''} réponse
+              {correctCount > 1 ? 's' : ''} sur {questions.length}
+              {perfect ? ' — sans faute, vos connaissances sont à jour.' : ''}
+            </Typography>
+          </Box>
+
+          <Box component="section" aria-labelledby="quiz-recapitulatif">
+            <Typography
+              id="quiz-recapitulatif"
+              component="h3"
+              sx={{ fontSize: '1rem', fontWeight: 700, mb: 1.5 }}
+            >
+              Récapitulatif
+            </Typography>
+
+            <Box component="ol" sx={{ listStyle: 'none', p: 0, m: 0, display: 'grid', gap: 1.5 }}>
+              {played.map((answer, position) => {
+                const playedQuestion = questions[position]
+
+                return (
+                  <Box
+                    component="li"
+                    key={position}
+                    sx={{
+                      px: 2,
+                      py: 1.5,
+                      border: '1px solid',
+                      borderColor: answer.isCorrect ? 'success.main' : 'error.main',
+                      borderRadius: `${radius}px`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+                      {answer.isCorrect ? (
+                        <CheckCircleOutlinedIcon
+                          aria-hidden
+                          sx={{ fontSize: '1.1rem', color: 'success.main' }}
+                        />
+                      ) : (
+                        <HighlightOffIcon
+                          aria-hidden
+                          sx={{ fontSize: '1.1rem', color: 'error.main' }}
+                        />
+                      )}
+                      <Typography
+                        component="p"
+                        sx={{ m: 0, fontSize: '0.8125rem', fontWeight: 700 }}
+                      >
+                        Question {position + 1} —{' '}
+                        {answer.isCorrect ? 'Bonne réponse' : 'Réponse incorrecte'}
+                      </Typography>
+                    </Box>
+
+                    <Typography component="p" sx={{ m: 0, fontSize: '0.9375rem', mb: 0.5 }}>
+                      {playedQuestion?.prompt}
+                    </Typography>
+
+                    <Typography
+                      component="p"
+                      sx={{ m: 0, fontSize: '0.875rem', color: 'text.secondary' }}
+                    >
+                      Réponse correcte : {playedQuestion?.options[answer.correctIndex]?.text ?? '—'}
+                    </Typography>
+                  </Box>
+                )
+              })}
+            </Box>
+          </Box>
+
+          <Box aria-live="polite" sx={{ mt: 2.5 }}>
+            {saveState === 'saving' ? (
+              <Typography
+                component="p"
+                sx={{ m: 0, fontSize: '0.875rem', color: 'text.secondary' }}
+              >
+                Enregistrement de votre partie…
+              </Typography>
+            ) : null}
+
+            {saveState === 'saved' ? (
+              <Typography
+                component="p"
+                sx={{ m: 0, fontSize: '0.875rem', color: 'text.secondary' }}
+              >
+                Partie enregistrée : elle alimente le compteur communautaire.
+              </Typography>
+            ) : null}
+
+            {saveState === 'throttled' || saveState === 'error' ? (
+              <Alert severity="warning" sx={{ borderRadius: `${radius}px` }}>
+                {saveState === 'throttled'
+                  ? 'Trop de parties enregistrées coup sur coup : celle-ci ne sera pas comptée.'
+                  : 'Votre partie n’a pas pu être enregistrée. Votre score reste affiché ci-dessus.'}
+              </Alert>
+            ) : null}
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+              mt: 3,
+            }}
+          >
+            <Button onClick={restart} color="accentQuiz" variant="contained">
+              Rejouer ce quiz
+            </Button>
+
+            {nextQuiz ? (
+              <AppLink href={`${quizzesPath}/${nextQuiz.slug}`}>Jouer « {nextQuiz.title} »</AppLink>
+            ) : (
+              <AppLink href={quizzesPath}>Voir tous les quiz</AppLink>
+            )}
+          </Box>
         </CardContent>
       </Card>
     )
@@ -117,23 +331,26 @@ export function QuizRunner({ quiz }: Props) {
           }}
         >
           <Typography component="p" sx={{ fontSize: '0.875rem', fontWeight: 700, m: 0 }}>
-            Question {index + 1} / {questions.length}
+            Question {index + 1} sur {questions.length}
           </Typography>
           <Typography component="p" sx={{ fontSize: '0.8125rem', color: 'text.secondary', m: 0 }}>
-            {score} bonne{score > 1 ? 's' : ''} réponse{score > 1 ? 's' : ''}
+            {score} point{score > 1 ? 's' : ''}
           </Typography>
         </Box>
 
         <LinearProgress
           variant="determinate"
-          value={((index + (validated ? 1 : 0)) / questions.length) * 100}
+          value={((index + (feedback ? 1 : 0)) / questions.length) * 100}
           aria-label="Progression dans le quiz"
           sx={{
             height: 6,
             borderRadius: `${radius}px`,
             backgroundColor: colors.bluePale,
             mb: 3,
-            '& .MuiLinearProgress-bar': { backgroundColor: colors.accentQuiz },
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: colors.accentQuiz,
+              [REDUCED_MOTION]: { transition: 'none' },
+            },
           }}
         />
 
@@ -154,20 +371,20 @@ export function QuizRunner({ quiz }: Props) {
           <RadioGroup
             value={selected === null ? '' : String(selected)}
             onChange={(event) => {
-              if (validated) return
+              if (feedback) return
               setSelected(Number(event.target.value))
             }}
             sx={{ display: 'grid', gap: 1.25 }}
           >
             {options.map((option, optionIndex) => {
-              const isAnswer = validated && optionIndex === correctIndex
-              const isWrongPick = validated && optionIndex === selected && !isCorrect
+              const isAnswer = feedback ? optionIndex === feedback.correctIndex : false
+              const isWrongPick = feedback ? optionIndex === selected && !feedback.isCorrect : false
 
               return (
                 <FormControlLabel
-                  key={option.id ?? optionIndex}
+                  key={optionIndex}
                   value={String(optionIndex)}
-                  disabled={validated}
+                  disabled={feedback !== null}
                   control={<Radio size="small" disableRipple sx={{ mr: 0.5 }} />}
                   label={
                     <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -177,13 +394,13 @@ export function QuizRunner({ quiz }: Props) {
                       {option.text}
                       {isAnswer ? (
                         <CheckCircleOutlinedIcon
-                          aria-label="Bonne réponse"
+                          aria-label="Réponse correcte"
                           sx={{ fontSize: '1.1rem', color: 'success.main' }}
                         />
                       ) : null}
                       {isWrongPick ? (
                         <HighlightOffIcon
-                          aria-label="Mauvaise réponse"
+                          aria-label="Votre réponse, incorrecte"
                           sx={{ fontSize: '1.1rem', color: 'error.main' }}
                         />
                       ) : null}
@@ -201,7 +418,9 @@ export function QuizRunner({ quiz }: Props) {
                         : surfaceBorder,
                     borderRadius: `${radius}px`,
                     backgroundColor:
-                      selected === optionIndex && !validated ? colors.bluePale : 'transparent',
+                      selected === optionIndex && !feedback ? colors.bluePale : 'transparent',
+                    transition: 'border-color 120ms ease, background-color 120ms ease',
+                    [REDUCED_MOTION]: { transition: 'none' },
                     '&.Mui-disabled': { opacity: 1 },
                     '& .MuiFormControlLabel-label': { fontSize: '0.9375rem' },
                     '& .MuiFormControlLabel-label.Mui-disabled': { color: 'text.primary' },
@@ -212,31 +431,53 @@ export function QuizRunner({ quiz }: Props) {
           </RadioGroup>
         </FormControl>
 
-        {validated ? (
-          <Box
-            role="status"
-            sx={{
-              mt: 2.5,
-              px: 2,
-              py: 1.5,
-              backgroundColor: isCorrect ? colors.bluePale : colors.sandPale,
-              borderLeft: `3px solid ${isCorrect ? colors.blueBright : colors.accentQuiz}`,
-              borderRadius: `${radius}px`,
-            }}
-          >
-            <Typography component="p" sx={{ fontWeight: 700, fontSize: '0.875rem', m: 0, mb: 0.5 }}>
-              {isCorrect ? 'Bonne réponse' : 'Mauvaise réponse'}
-            </Typography>
-            {question.explanation ? (
-              <Typography variant="body2" sx={{ m: 0 }}>
-                {question.explanation}
-              </Typography>
-            ) : null}
-          </Box>
-        ) : null}
+        {/*
+          Le résultat n'est jamais porté par la seule couleur (§ 4.5) : icône,
+          libellé explicite, et annonce au lecteur d'écran par cette région.
+        */}
+        <Box aria-live="polite">
+          {feedback ? (
+            <Box
+              sx={{
+                mt: 2.5,
+                px: 2,
+                py: 1.5,
+                backgroundColor: feedback.isCorrect ? colors.bluePale : colors.sandPale,
+                borderLeft: `3px solid ${feedback.isCorrect ? colors.blueBright : colors.accentQuiz}`,
+                borderRadius: `${radius}px`,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                {feedback.isCorrect ? (
+                  <CheckCircleOutlinedIcon
+                    aria-hidden
+                    sx={{ fontSize: '1.15rem', color: 'success.main' }}
+                  />
+                ) : (
+                  <HighlightOffIcon aria-hidden sx={{ fontSize: '1.15rem', color: 'error.main' }} />
+                )}
+                <Typography component="p" sx={{ fontWeight: 700, fontSize: '0.875rem', m: 0 }}>
+                  {feedback.isCorrect ? 'Bonne réponse' : 'Réponse incorrecte'}
+                </Typography>
+              </Box>
+
+              {feedback.explanation ? (
+                <Typography variant="body2" sx={{ m: 0 }}>
+                  {feedback.explanation}
+                </Typography>
+              ) : null}
+            </Box>
+          ) : null}
+
+          {error ? (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: `${radius}px` }}>
+              {error}
+            </Alert>
+          ) : null}
+        </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          {validated ? (
+          {feedback ? (
             <Button onClick={next} color="accentQuiz" variant="contained">
               {index + 1 >= questions.length ? 'Voir mon score' : 'Question suivante'}
             </Button>
@@ -245,9 +486,9 @@ export function QuizRunner({ quiz }: Props) {
               onClick={validate}
               color="accentQuiz"
               variant="contained"
-              disabled={selected === null}
+              disabled={selected === null || pending}
             >
-              Valider ma réponse
+              {pending ? 'Correction…' : 'Valider ma réponse'}
             </Button>
           )}
         </Box>

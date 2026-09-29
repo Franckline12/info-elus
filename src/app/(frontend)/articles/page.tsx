@@ -14,7 +14,7 @@ import { taxonomyOptions } from '@/lib/filterOptions'
 import { countArticlesByCategory, getArticles } from '@/lib/queries/articles'
 import { getCategories } from '@/lib/queries/categories'
 import { getTags } from '@/lib/queries/tags'
-import { listingPagePath, listingPath } from '@/lib/routes'
+import { listingPagePath, listingPath, parsePage } from '@/lib/routes'
 
 const PER_PAGE = 9
 
@@ -26,11 +26,6 @@ export const metadata: Metadata = {
 
 type Props = {
   searchParams: Promise<{ categorie?: string; tag?: string; q?: string; page?: string }>
-}
-
-const parsePage = (value?: string): number => {
-  const page = Number.parseInt(value ?? '1', 10)
-  return Number.isNaN(page) || page < 1 ? 1 : page
 }
 
 export default async function ArticlesPage({ searchParams }: Props) {
@@ -118,11 +113,10 @@ export default async function ArticlesPage({ searchParams }: Props) {
       </Box>
 
       <PaginationLinks
-        type="article"
+        basePath={listingPath('article')}
         page={result.page ?? 1}
         totalPages={result.totalPages}
-        categorySlug={categorie}
-        tagSlug={tag}
+        params={{ categorie, tag }}
       />
     </Container>
   )

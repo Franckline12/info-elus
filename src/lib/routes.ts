@@ -49,15 +49,39 @@ export type ListingFilters = {
   tagSlug?: string
 }
 
-/** Construit l'URL d'une page de listing en conservant les filtres actifs. */
+/**
+ * URL d'une page de listing, quel que soit le listing : les paramètres vides
+ * sont omis, et la page 1 reste l'URL nue pour ne pas dédoubler l'adresse
+ * canonique aux yeux des moteurs.
+ */
+export const pagePath = (
+  basePath: string,
+  page?: number,
+  params: Record<string, string | undefined> = {},
+): string => {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value)
+  }
+  if (page && page > 1) search.set('page', String(page))
+  const query = search.toString()
+  return query ? `${basePath}?${query}` : basePath
+}
+
+/** Construit l'URL d'une page de listing d'articles en conservant les filtres actifs. */
 export const listingPagePath = (
   type: ContentType,
   { page, categorySlug, tagSlug }: ListingFilters = {},
-): string => {
-  const params = new URLSearchParams()
-  if (categorySlug) params.set('categorie', categorySlug)
-  if (tagSlug) params.set('tag', tagSlug)
-  if (page && page > 1) params.set('page', String(page))
-  const query = params.toString()
-  return query ? `${listingPath(type)}?${query}` : listingPath(type)
+): string => pagePath(listingPath(type), page, { categorie: categorySlug, tag: tagSlug })
+
+/**
+ * Numéro de page lu dans l'URL. Toute valeur absurde (`?page=0`, `?page=abc`)
+ * ramène à la première page plutôt qu'à une erreur.
+ */
+export const parsePage = (value?: string): number => {
+  const page = Number.parseInt(value ?? '1', 10)
+  return Number.isNaN(page) || page < 1 ? 1 : page
 }
+
+/** Construit l'URL d'une page de l'historique des quiz (§ 2.5). */
+export const quizzesPagePath = (page?: number): string => pagePath(quizzesPath, page)
