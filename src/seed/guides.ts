@@ -3,8 +3,9 @@ import os from 'os'
 import path from 'path'
 import type { Payload } from 'payload'
 
-import type { Media, Tag, Theme } from '../payload-types'
+import type { Media, Tag } from '../payload-types'
 import { callout, list, p, quote, richText, type RichTextContent } from './lexical'
+import { ensureThemes, type SeedTheme } from './taxonomies'
 import { buildPdf } from './pdf'
 
 /**
@@ -39,7 +40,7 @@ type SeedGuide = {
   resources?: SeedResource[]
 }
 
-const THEMES: { slug: string; name: string; color: Theme['color'] }[] = [
+const THEMES: SeedTheme[] = [
   { slug: 'elections', name: 'Élections', color: 'blue-bright' },
   { slug: 'budget-finances', name: 'Budget & finances', color: 'blue-mid' },
   { slug: 'sante-securite', name: 'Santé & sécurité', color: 'blue-deep' },
@@ -355,35 +356,6 @@ const GUIDES: SeedGuide[] = [
   },
 ]
 
-/** Crée les thèmes manquants et renvoie la correspondance slug → identifiant. */
-const ensureThemes = async (payload: Payload): Promise<Map<string, number>> => {
-  const map = new Map<string, number>()
-
-  for (const theme of THEMES) {
-    const { docs } = await payload.find({
-      collection: 'themes',
-      where: { slug: { equals: theme.slug } },
-      limit: 1,
-      depth: 0,
-    })
-
-    const existing = docs[0]
-    if (existing) {
-      map.set(theme.slug, existing.id)
-      continue
-    }
-
-    const created = await payload.create({
-      collection: 'themes',
-      data: { name: theme.name, slug: theme.slug, color: theme.color },
-    })
-    payload.logger.info(`Thème créé : ${theme.name}`)
-    map.set(theme.slug, created.id)
-  }
-
-  return map
-}
-
 const ensureTags = async (payload: Payload): Promise<Map<string, number>> => {
   const map = new Map<string, number>()
 
@@ -451,7 +423,7 @@ const ensureResourceFiles = async (payload: Payload): Promise<Map<string, number
 
 export async function seedGuides(payload: Payload): Promise<void> {
   const [themes, tags, files] = [
-    await ensureThemes(payload),
+    await ensureThemes(payload, THEMES),
     await ensureTags(payload),
     await ensureResourceFiles(payload),
   ]

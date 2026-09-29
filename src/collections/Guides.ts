@@ -99,7 +99,10 @@ export const Guides: CollectionConfig = {
                 description:
                   'Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.',
                 components: {
-                  RowLabel: '@/components/admin/GuideSectionRowLabel#GuideSectionRowLabel',
+                  RowLabel: {
+                    path: '@/components/admin/ArrayRowLabel#ArrayRowLabel',
+                    clientProps: { fallback: 'Section' },
+                  },
                 },
               },
               fields: [

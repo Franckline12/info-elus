@@ -13,7 +13,7 @@ import type { FormEvent, MouseEvent } from 'react'
 
 import AppLink from '@/components/AppLink'
 import type { FilterOption } from '@/lib/filterOptions'
-import { colors, hoverShadow, radius, rule, surfaceBorder } from '@/theme/tokens'
+import { colors, hoverShadow, radius, surfaceBorder } from '@/theme/tokens'
 
 /** Un filtre rendu en menu déroulant : une option = une URL. */
 export type SearchFilter = {
@@ -129,8 +129,16 @@ export function SearchBar({
   // sur une option puisse l'annuler : le lien navigue déjà, une poussée
   // différée en doublon ajouterait une entrée d'historique fantôme.
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  // Les filtres courants sont relus au déclenchement du minuteur, sans figurer
+  // dans les dépendances de l'effet : les y mettre relancerait le délai à
+  // chaque changement de filtre. La synchronisation passe par un effet — écrire
+  // une référence pendant le rendu n'est pas permis — déclaré avant celui du
+  // minuteur, donc appliqué en premier à chaque rendu.
   const values_ = useRef(values)
-  values_.current = values
+  useEffect(() => {
+    values_.current = values
+  }, [values])
 
   useEffect(() => {
     // Rien à pousser si l'URL porte déjà ce terme : c'est le cas au montage et
