@@ -1,10 +1,25 @@
 import type { CollectionAfterChangeHook, CollectionAfterDeleteHook } from 'payload'
 import { revalidatePath } from 'next/cache.js'
 
-type VersionedDoc = {
+type RevalidatedDoc = {
   id: number | string
   slug?: string | null
   _status?: ('draft' | 'published') | null
+  published?: boolean | null
+}
+
+/** Lecture par défaut de l'état de publication : celui des collections versionnées. */
+const byStatus = (doc: RevalidatedDoc): boolean => doc._status === 'published'
+
+/** Variante des collections publiées par une case à cocher (prestataires, § 2.4). */
+export const byPublishedFlag = (doc: RevalidatedDoc): boolean => doc.published === true
+
+type RevalidateOptions = {
+  /**
+   * Comment déterminer qu'un document est en ligne. Par défaut `_status` ;
+   * l'annuaire des prestataires passe `byPublishedFlag`.
+   */
+  isPublished?: (doc: RevalidatedDoc) => boolean
 }
 
 /**
@@ -26,7 +41,7 @@ const revalidate = (
   }
 }
 
-const pathsFor = (listing: string, doc: VersionedDoc): string[] => [
+const pathsFor = (listing: string, doc: RevalidatedDoc): string[] => [
   ...(doc.slug ? [`${listing}/${doc.slug}`] : []),
   listing,
   '/',
@@ -40,8 +55,11 @@ const pathsFor = (listing: string, doc: VersionedDoc): string[] => [
  * brouillon sont ignorés, et l'ancienne URL est purgée quand le slug change ou
  * que le document est dépublié.
  */
-export const revalidateContent = (listing: string) => {
-  const afterChange: CollectionAfterChangeHook<VersionedDoc> = ({
+export const revalidateContent = (
+  listing: string,
+  { isPublished = byStatus }: RevalidateOptions = {},
+) => {
+  const afterChange: CollectionAfterChangeHook<RevalidatedDoc> = ({
     doc,
     previousDoc,
     req: { payload, context },
@@ -50,13 +68,13 @@ export const revalidateContent = (listing: string) => {
 
     const paths = new Set<string>()
 
-    if (doc._status === 'published') {
+    if (isPublished(doc)) {
       pathsFor(listing, doc).forEach((path) => paths.add(path))
     }
 
-    if (previousDoc?._status === 'published') {
+    if (previousDoc && isPublished(previousDoc)) {
       const slugChanged = previousDoc.slug !== doc.slug
-      const unpublished = doc._status !== 'published'
+      const unpublished = !isPublished(doc)
 
       if (slugChanged || unpublished) {
         pathsFor(listing, previousDoc).forEach((path) => paths.add(path))
@@ -68,14 +86,14 @@ export const revalidateContent = (listing: string) => {
     return doc
   }
 
-  const afterDelete: CollectionAfterDeleteHook<VersionedDoc> = ({
+  const afterDelete: CollectionAfterDeleteHook<RevalidatedDoc> = ({
     doc,
     req: { payload, context },
   }) => {
     if (context.disableRevalidate) return doc
 
-    // Supprimer un brouillon ne change rien au site publié : rien à purger.
-    if (doc._status !== 'published') return doc
+    // Supprimer un document non publié ne change rien au site : rien à purger.
+    if (!isPublished(doc)) return doc
 
     revalidate(pathsFor(listing, doc), payload.logger)
 

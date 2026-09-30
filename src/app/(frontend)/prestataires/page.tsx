@@ -1,81 +1,191 @@
 import type { Metadata } from 'next'
 import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
+import AppLink from '@/components/AppLink'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
+import FilterLinks from '@/components/FilterLinks'
 import PageHero from '@/components/PageHero'
-import ProviderCard from '@/components/provider/ProviderCard'
-import SearchBar from '@/components/SearchBar'
-import { valueOptions } from '@/lib/filterOptions'
-import { providerCategoryOptions } from '@/lib/providerCategories'
-import { countProvidersByCategory, getProviders } from '@/lib/queries/providers'
-import { providersPath } from '@/lib/routes'
+import PaginationLinks from '@/components/PaginationLinks'
+import ProviderRow from '@/components/provider/ProviderRow'
+import { interventionAreaLabel, interventionAreaValue } from '@/lib/interventionAreas'
+import { providerCategoryLabel, providerCategoryValue } from '@/lib/providerCategories'
+import { getAreasWithCount, getCategoriesWithCount, getProviders } from '@/lib/queries/providers'
+import { parsePage, providersPagePath, providersPath } from '@/lib/routes'
+import { rule } from '@/theme/tokens'
+
+const PER_PAGE = 10
+
+const INTRO =
+  'Formation, conseil juridique, comptabilité, billetterie, événementiel : les élus de CSE ' +
+  'ont régulièrement besoin d’un appui extérieur. Cet annuaire rassemble des prestataires ' +
+  'qui travaillent avec les comités, classés par métier et par zone d’intervention.'
 
 export const metadata: Metadata = {
   title: 'Annuaire des prestataires',
   description:
-    'Trouvez des partenaires de confiance pour vous accompagner dans vos projets et vos missions d’élu de CSE.',
+    'Formation, assistance juridique, comptabilité, billetterie, événementiel : des prestataires qui accompagnent les élus de CSE, par métier et par région.',
 }
 
 type Props = {
-  searchParams: Promise<{ categorie?: string; q?: string }>
+  searchParams: Promise<{ categorie?: string; zone?: string; page?: string }>
 }
 
-export default async function ProvidersPage({ searchParams }: Props) {
-  const { categorie, q } = await searchParams
+/** Libellé du décompte, accordé au singulier comme au pluriel. */
+const resultLabel = (total: number): string =>
+  `${total} prestataire${total > 1 ? 's' : ''} référencé${total > 1 ? 's' : ''}`
 
-  const [result, counts] = await Promise.all([
-    getProviders({ category: categorie, search: q }),
-    countProvidersByCategory({ search: q }),
+export default async function ProvidersPage({ searchParams }: Props) {
+  const params = await searchParams
+
+  // Une valeur inconnue dans l'URL est ignorée plutôt que renvoyée à la base :
+  // le filtre retombe alors sur « toutes », et non sur une liste vide.
+  const categorySlug = providerCategoryValue(params.categorie)
+  const area = interventionAreaValue(params.zone)
+  const page = parsePage(params.page)
+
+  const [result, categories, areas] = await Promise.all([
+    getProviders({ categorySlug, area, page, limit: PER_PAGE }),
+    // Chaque famille de filtres se compte sans elle-même : une option annonce
+    // ce qu'elle donnerait si on la choisissait, l'autre filtre restant actif.
+    getCategoriesWithCount({ area }),
+    getAreasWithCount({ categorySlug }),
   ])
 
-  const activeCategory = providerCategoryOptions.find((option) => option.value === categorie)
+  const filtered = Boolean(categorySlug || area)
 
   return (
     <Container sx={{ py: { xs: 3, md: 4 } }}>
       <PageHero
         backgroundImage="/images/prestataire.jpeg"
         backgroundPosition="center"
-        title="Annuaire des prestataires"
-        description="Trouvez des partenaires de confiance pour vous accompagner dans vos projets et vos missions."
+        title="Réseau de prestataires"
+        description="Des partenaires qui accompagnent les élus dans leurs projets et leurs missions."
       />
 
-      <Box sx={{ mt: { xs: 2.5, md: 3 } }}>
-        <SearchBar
-          action={providersPath}
-          label="Rechercher un prestataire"
-          placeholder="Rechercher un prestataire…"
-          defaultValue={q}
-          filters={[
+      <Typography
+        variant="lede"
+        component="p"
+        sx={{ mt: { xs: 2.5, md: 3 }, maxWidth: '68ch', color: 'text.secondary' }}
+      >
+        {INTRO}
+      </Typography>
+
+      <Box
+        sx={{
+          mt: { xs: 2.5, md: 3 },
+          display: 'grid',
+          gap: { xs: 1.5, md: 2 },
+          pt: { xs: 2.5, md: 3 },
+          borderTop: `1px solid ${rule}`,
+        }}
+      >
+        <FilterLinks
+          label="Filtrer par catégorie"
+          items={[
             {
-              name: 'categorie',
-              label: 'Filtrer par catégorie de prestataire',
-              allLabel: 'Toutes les catégories',
-              allCount: counts.total,
-              value: categorie,
-              options: valueOptions(providerCategoryOptions, counts),
+              key: 'all',
+              label: 'Toutes les catégories',
+              href: providersPagePath({ area }),
+              active: !categorySlug,
             },
+            ...categories.map((category) => ({
+              key: category.value,
+              label: `${category.label} (${category.count ?? 0})`,
+              href: providersPagePath({ categorySlug: category.value, area }),
+              active: category.value === categorySlug,
+            })),
           ]}
-          resultLabel={`${result.totalDocs} prestataire${result.totalDocs > 1 ? 's' : ''}`}
+        />
+
+        <FilterLinks
+          label="Filtrer par zone d’intervention"
+          items={[
+            {
+              key: 'all',
+              label: 'Toutes les zones',
+              href: providersPagePath({ categorySlug }),
+              active: !area,
+            },
+            ...areas.map((item) => ({
+              key: item.value,
+              label: `${item.label} (${item.count ?? 0})`,
+              href: providersPagePath({ categorySlug, area: item.value }),
+              active: item.value === area,
+            })),
+          ]}
         />
       </Box>
 
-      <Box sx={{ mt: { xs: 3, md: 4 }, display: 'grid', gap: { xs: 2, md: 2.5 } }}>
+      <Typography
+        component="p"
+        aria-live="polite"
+        sx={{ mt: { xs: 2, md: 2.5 }, fontSize: '0.875rem', color: 'text.secondary' }}
+      >
+        {resultLabel(result.totalDocs)}
+      </Typography>
+
+      <Box sx={{ mt: { xs: 2, md: 2.5 } }}>
         {result.docs.length === 0 ? (
           <EmptyState
-            title="Aucun prestataire référencé"
+            title="Aucun prestataire ne correspond"
             description={
-              q
-                ? `Aucun prestataire ne correspond à « ${q} ».`
-                : activeCategory
-                  ? `Aucun prestataire référencé dans la catégorie « ${activeCategory.label} ».`
-                  : 'Les premiers partenaires seront référencés prochainement.'
+              filtered
+                ? `Aucun prestataire référencé pour ce croisement${
+                    categorySlug ? ` de la catégorie « ${providerCategoryLabel(categorySlug)} »` : ''
+                  }${area ? ` en ${interventionAreaLabel(area)}` : ''}.`
+                : 'Les premiers partenaires seront référencés prochainement.'
             }
           />
         ) : (
-          result.docs.map((provider) => <ProviderCard key={provider.id} provider={provider} />)
+          <Box
+            component="ul"
+            sx={{ listStyle: 'none', m: 0, p: 0, borderTop: `1px solid ${rule}` }}
+          >
+            {result.docs.map((provider) => (
+              <Box component="li" key={provider.id} sx={{ borderBottom: `1px solid ${rule}` }}>
+                <ProviderRow provider={provider} />
+              </Box>
+            ))}
+          </Box>
         )}
       </Box>
+
+      {filtered ? (
+        <Box sx={{ mt: { xs: 2, md: 2.5 } }}>
+          <AppLink href={providersPath} sx={{ fontSize: '0.875rem' }}>
+            Réinitialiser les filtres
+          </AppLink>
+        </Box>
+      ) : null}
+
+      <PaginationLinks
+        basePath={providersPath}
+        page={result.page ?? 1}
+        totalPages={result.totalPages}
+        params={{ categorie: categorySlug, zone: area }}
+      />
+
+      {/*
+        Mention éditoriale : l'annuaire est alimenté par la rédaction, il ne
+        constitue pas une recommandation. À faire valider par le client.
+      */}
+      <Typography
+        component="p"
+        sx={{
+          mt: { xs: 5, md: 6 },
+          pt: { xs: 2, md: 2.5 },
+          borderTop: `1px solid ${rule}`,
+          maxWidth: '68ch',
+          fontSize: '0.8125rem',
+          color: 'text.secondary',
+        }}
+      >
+        Le référencement d’un prestataire dans cet annuaire ne vaut ni recommandation ni
+        partenariat commercial d’Infos Élus, sauf mention contraire sur la fiche. Il revient à
+        chaque comité de vérifier les prestations et les tarifs proposés avant tout engagement.
+      </Typography>
     </Container>
   )
 }

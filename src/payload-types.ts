@@ -461,32 +461,100 @@ export interface QuizResult {
   createdAt: string;
 }
 /**
+ * Annuaire des partenaires des élus. Une fiche n’apparaît sur le site qu’une fois cochée « Visible sur le site ».
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "providers".
  */
 export interface Provider {
   id: number;
   name: string;
+  /**
+   * Facultatif : à défaut, l’annuaire affiche les initiales du prestataire.
+   */
   logo?: (number | null) | Media;
-  description: string;
-  category: 'formation' | 'legal' | 'accounting' | 'leisure' | 'events';
   /**
-   * Par exemple « Île-de-France » ou « France entière ».
+   * Une à deux phrases, affichées dans l’annuaire et en tête de la fiche. 200 caractères maximum.
    */
-  area?: string | null;
+  shortDescription: string;
   /**
-   * URL complète, avec https://
+   * Facultatif : le détail de l’offre, affiché sur la fiche.
    */
-  website?: string | null;
-  email?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  category: 'training' | 'legal' | 'accounting' | 'ticketing' | 'events';
+  /**
+   * Une ou plusieurs régions. « France entière » suffit pour un prestataire national : il remonte alors sur toutes les régions.
+   */
+  interventionAreas?:
+    | (
+        | 'france'
+        | 'auvergne-rhone-alpes'
+        | 'bourgogne-franche-comte'
+        | 'bretagne'
+        | 'centre-val-de-loire'
+        | 'corse'
+        | 'grand-est'
+        | 'hauts-de-france'
+        | 'ile-de-france'
+        | 'normandie'
+        | 'nouvelle-aquitaine'
+        | 'occitanie'
+        | 'pays-de-la-loire'
+        | 'provence-alpes-cote-d-azur'
+        | 'guadeloupe'
+        | 'guyane'
+        | 'martinique'
+        | 'la-reunion'
+        | 'mayotte'
+      )[]
+    | null;
+  /**
+   * Coordonnées publiées telles quelles sur la fiche.
+   */
+  contact?: {
+    /**
+     * Facultatif : la personne à joindre chez le prestataire.
+     */
+    contactName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    /**
+     * URL complète, avec https://
+     */
+    website?: string | null;
+  };
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
-  publishedAt?: string | null;
+  /**
+   * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le prestataire n’apparaît pas dans l’annuaire public.
+   */
+  published?: boolean | null;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -818,16 +886,29 @@ export interface QuizResultsSelect<T extends boolean = true> {
 export interface ProvidersSelect<T extends boolean = true> {
   name?: T;
   logo?: T;
+  shortDescription?: T;
   description?: T;
   category?: T;
-  area?: T;
-  website?: T;
-  email?: T;
+  interventionAreas?: T;
+  contact?:
+    | T
+    | {
+        contactName?: T;
+        email?: T;
+        phone?: T;
+        website?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   slug?: T;
-  publishedAt?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

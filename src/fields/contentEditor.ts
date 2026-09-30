@@ -47,3 +47,26 @@ export const contentEditor = ({ linkTo = ['articles'] }: ContentEditorArgs = {})
       InlineToolbarFeature(),
     ],
   })
+
+/**
+ * Éditeur allégé des présentations de prestataires (§ 2.4) : sous-titres,
+ * listes, gras, liens et citation.
+ *
+ * Volontairement plus pauvre que `contentEditor` : une fiche d'annuaire n'est
+ * pas un espace éditorial, donc ni image ni encadré. Le H3 y est le plus haut
+ * niveau, la fiche portant déjà un H1 (le nom) et un H2 (« Présentation »).
+ */
+export const profileEditor = ({ linkTo = ['articles', 'guides'] }: ContentEditorArgs = {}) =>
+  lexicalEditor({
+    features: () => [
+      ParagraphFeature(),
+      HeadingFeature({ enabledHeadingSizes: ['h3'] }),
+      BoldFeature(),
+      UnorderedListFeature(),
+      OrderedListFeature(),
+      BlockquoteFeature(),
+      LinkFeature({ enabledCollections: linkTo }),
+      FixedToolbarFeature(),
+      InlineToolbarFeature(),
+    ],
+  })
