@@ -27,10 +27,6 @@ export const providerPath = (provider: { slug?: string | null }): string =>
 /** Listing des guides filtré sur un thème. */
 export const themePath = (slug: string): string => `${guidesPath}?theme=${encodeURIComponent(slug)}`
 
-/** Listing de l'annuaire filtré sur une catégorie de prestataire. */
-export const providerCategoryPath = (value: string): string =>
-  `${providersPath}?categorie=${encodeURIComponent(value)}`
-
 /** URL publique d'un document, déterminée par son type. */
 export const articlePath = (article: Pick<Article, 'type'> & { slug?: string | null }): string =>
   `${listingPath(article.type)}/${article.slug ?? ''}`
@@ -67,6 +63,24 @@ export const pagePath = (
   const query = search.toString()
   return query ? `${basePath}?${query}` : basePath
 }
+
+export type ProviderFilters = {
+  page?: number
+  categorySlug?: string
+  /** Zone d'intervention, valeur de `interventionAreaOptions`. */
+  area?: string
+}
+
+/**
+ * URL de l'annuaire des prestataires : catégorie, zone et page voyagent
+ * ensemble, pour que choisir un filtre n'efface pas l'autre (§ 2.4).
+ */
+export const providersPagePath = ({ page, categorySlug, area }: ProviderFilters = {}): string =>
+  pagePath(providersPath, page, { categorie: categorySlug, zone: area })
+
+/** Listing de l'annuaire filtré sur une seule catégorie. */
+export const providerCategoryPath = (value: string): string =>
+  providersPagePath({ categorySlug: value })
 
 /** Construit l'URL d'une page de listing d'articles en conservant les filtres actifs. */
 export const listingPagePath = (

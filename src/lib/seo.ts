@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 import { absoluteUrl, siteName } from '@/lib/site'
-import type { Article, Guide, Media } from '@/payload-types'
+import type { Article, Media } from '@/payload-types'
 
 /**
  * Le plugin SEO génère des `meta.title` déjà suffixés « — Infos Élus », alors que
@@ -15,53 +15,69 @@ const asMedia = (value: Media | number | null | undefined): Media | null =>
   value && typeof value === 'object' ? value : null
 
 /**
- * Contenu éditorial doté des champs du plugin SEO. Articles et guides partagent
- * la même forme, au résumé près : chapô (`excerpt`) pour les premiers, résumé
- * court (`summary`) pour les seconds.
+ * Contenu doté des champs du plugin SEO. Chaque rubrique nomme son titre et son
+ * résumé à sa façon — `title`/`excerpt` pour les articles, `title`/`summary`
+ * pour les guides, `name`/`shortDescription` pour les prestataires — d'où ces
+ * champs tous facultatifs, résolus par ordre de préférence.
  */
-type SeoContent = Pick<Article | Guide, 'title' | 'featuredImage' | 'updatedAt'> & {
+type SeoContent = {
+  title?: string | null
+  name?: string | null
   excerpt?: string | null
   summary?: string | null
+  shortDescription?: string | null
+  featuredImage?: Media | number | null
+  /** Visuel de repli d'une fiche de l'annuaire, faute d'image mise en avant. */
+  logo?: Media | number | null
   meta?: Article['meta']
   publishedAt?: string | null
+  updatedAt: string
 }
 
 /**
- * Métadonnées d'une page de contenu : champs SEO du CMS en priorité, repli sur
- * `title`, le résumé et `featuredImage` (§ 4.3).
+ * `article` pour les contenus datés, `website` pour une fiche d'annuaire : les
+ * deux formes Open Graph n'acceptent pas les mêmes attributs, d'où la
+ * distinction plutôt qu'un simple paramètre recopié.
  */
-export function contentMetadata(article: SeoContent, path: string): Metadata {
-  const title = stripSiteSuffix(article.meta?.title || article.title)
-  const description = article.meta?.description || article.excerpt || article.summary || undefined
-  const image = asMedia(article.meta?.image) ?? asMedia(article.featuredImage)
+export type OgType = 'article' | 'website'
+
+/**
+ * Métadonnées d'une page de contenu : champs SEO du CMS en priorité, repli sur
+ * le titre, le résumé et l'image (§ 4.3).
+ */
+export function contentMetadata(doc: SeoContent, path: string, ogType: OgType = 'article'): Metadata {
+  const title = stripSiteSuffix(doc.meta?.title || doc.title || doc.name || '')
+  const description =
+    doc.meta?.description || doc.excerpt || doc.summary || doc.shortDescription || undefined
+  const image = asMedia(doc.meta?.image) ?? asMedia(doc.featuredImage) ?? asMedia(doc.logo)
   const url = absoluteUrl(path)
+
+  const images = image?.url
+    ? [
+        {
+          url: absoluteUrl(image.url),
+          width: image.width ?? undefined,
+          height: image.height ?? undefined,
+          alt: image.alt,
+        },
+      ]
+    : undefined
+
+  const shared = { title, description, url, siteName, locale: 'fr_FR', images }
 
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: {
-      type: 'article',
-      title,
-      description,
-      url,
-      siteName,
-      locale: 'fr_FR',
-      ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
-      modifiedTime: article.updatedAt,
-      ...(image?.url
+    openGraph:
+      ogType === 'article'
         ? {
-            images: [
-              {
-                url: absoluteUrl(image.url),
-                width: image.width ?? undefined,
-                height: image.height ?? undefined,
-                alt: image.alt,
-              },
-            ],
+            ...shared,
+            type: 'article',
+            ...(doc.publishedAt ? { publishedTime: doc.publishedAt } : {}),
+            modifiedTime: doc.updatedAt,
           }
-        : {}),
-    },
+        : { ...shared, type: 'website' },
     twitter: {
       card: image?.url ? 'summary_large_image' : 'summary',
       title,
