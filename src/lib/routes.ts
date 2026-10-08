@@ -99,3 +99,10 @@ export const parsePage = (value?: string): number => {
 
 /** Construit l'URL d'une page de l'historique des quiz (§ 2.5). */
 export const quizzesPagePath = (page?: number): string => pagePath(quizzesPath, page)
+
+/** Parcours de la lettre hebdomadaire (§ 2.6). */
+export const newsletterConfirmationPath = (token: string): string =>
+  `/newsletter/confirmation?token=${encodeURIComponent(token)}`
+
+export const newsletterUnsubscribePath = (token: string): string =>
+  `/newsletter/desinscription?token=${encodeURIComponent(token)}`

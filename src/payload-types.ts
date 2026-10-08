@@ -78,6 +78,7 @@ export interface Config {
     'quiz-results': QuizResult;
     providers: Provider;
     testimonials: Testimonial;
+    subscribers: Subscriber;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -96,6 +97,7 @@ export interface Config {
     'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -579,6 +581,38 @@ export interface Testimonial {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Inscriptions à la lettre hebdomadaire. Seules les adresses « Confirmé » ont donné leur consentement (double opt-in) et peuvent être contactées.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  /**
+   * Passe à « Confirmé » quand la personne clique sur le lien reçu par email. Ne le modifiez pas à la main : ce serait inscrire quelqu’un sans son consentement.
+   */
+  status: 'pending' | 'confirmed' | 'unsubscribed';
+  confirmationToken?: string | null;
+  /**
+   * Au-delà, le lien de confirmation ne fonctionne plus (7 jours).
+   */
+  tokenExpiresAt?: string | null;
+  unsubscribeToken?: string | null;
+  subscribedAt?: string | null;
+  /**
+   * Preuve du consentement à conserver (§ 4.4).
+   */
+  confirmedAt?: string | null;
+  unsubscribedAt?: string | null;
+  /**
+   * Page depuis laquelle l’inscription a été demandée.
+   */
+  source?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -645,6 +679,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'testimonials';
         value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -921,6 +959,23 @@ export interface TestimonialsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  confirmationToken?: T;
+  tokenExpiresAt?: T;
+  unsubscribeToken?: T;
+  subscribedAt?: T;
+  confirmedAt?: T;
+  unsubscribedAt?: T;
+  source?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

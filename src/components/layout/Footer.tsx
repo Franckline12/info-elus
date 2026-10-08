@@ -3,14 +3,20 @@ import Typography from '@mui/material/Typography'
 
 import AppLink from '@/components/AppLink'
 import Container from '@/components/Container'
+import NewsletterForm from '@/components/NewsletterForm'
 import { legalNavItems, siteName, siteTagline } from '@/lib/site'
-import { colors, fonts } from '@/theme/tokens'
+import { colors, fonts, ruleOnDeep } from '@/theme/tokens'
 
 import SocialLinks from './SocialLinks'
 
 /**
- * Pied de page de la maquette : une seule rangée sur fond bleu profond —
- * logotype signé à gauche, liens au centre, réseaux sociaux à droite.
+ * Pied de page sur fond bleu profond : logotype signé et inscription à la
+ * lettre hebdomadaire sur la première rangée, liens et réseaux sociaux sur la
+ * seconde, séparées par un filet fin (§ 5.3).
+ *
+ * Le formulaire y est présent sur toutes les pages (§ 2.6) : c'est la version
+ * compacte, sans cadre ni illustration, celle du bloc large restant réservée à
+ * l'accueil et au bas des contenus.
  */
 export function Footer() {
   return (
@@ -29,9 +35,11 @@ export function Footer() {
           sx={{
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { xs: 'flex-start', md: 'center' },
+            alignItems: { xs: 'stretch', md: 'flex-start' },
             justifyContent: 'space-between',
-            gap: { xs: 3, md: 4 },
+            gap: { xs: 3.5, md: 6 },
+            pb: { xs: 3.5, md: 3.5 },
+            borderBottom: `1px solid ${ruleOnDeep}`,
           }}
         >
           <Box>
@@ -62,7 +70,33 @@ export function Footer() {
             </Typography>
           </Box>
 
-          <Box component="nav" aria-label="Liens de pied de page" sx={{ ml: { md: 'auto' } }}>
+          <Box
+            component="section"
+            aria-labelledby="newsletter-pied"
+            sx={{ width: { md: 380 }, flexShrink: 0 }}
+          >
+            <Typography
+              id="newsletter-pied"
+              component="h2"
+              sx={{ fontSize: '0.9375rem', fontWeight: 700, m: 0, mb: 1.25 }}
+            >
+              La lettre hebdomadaire
+            </Typography>
+            <NewsletterForm variant="compact" source="pied-de-page" />
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
+            gap: { xs: 2.5, md: 4 },
+            pt: { xs: 3, md: 3 },
+          }}
+        >
+          <Box component="nav" aria-label="Liens de pied de page">
             <Box
               component="ul"
               sx={{
@@ -92,7 +126,7 @@ export function Footer() {
             </Box>
           </Box>
 
-          <Box sx={{ ml: { md: 3 } }}>
+          <Box sx={{ ml: { md: 'auto' } }}>
             <SocialLinks />
           </Box>
         </Box>

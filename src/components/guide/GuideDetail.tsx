@@ -11,6 +11,7 @@ import Breadcrumb from '@/components/Breadcrumb'
 import Container from '@/components/Container'
 import JsonLd from '@/components/JsonLd'
 import MediaImage from '@/components/MediaImage'
+import NewsletterBlock from '@/components/NewsletterBlock'
 import RichText from '@/components/RichText'
 import SectionHeading from '@/components/SectionHeading'
 import TagList from '@/components/TagList'
@@ -120,7 +121,6 @@ export function GuideDetail({ guide, related }: Props) {
               <Typography variant="lede" component="p" sx={{ color: 'text.secondary', mb: 2 }}>
                 {guide.summary}
               </Typography>
-
             </Box>
 
             <Divider sx={{ my: { xs: 3, md: 4 } }} />
@@ -180,6 +180,11 @@ export function GuideDetail({ guide, related }: Props) {
           </Grid>
         </Box>
       ) : null}
+
+      {/* Inscription à la lettre hebdomadaire en bas de contenu (§ 2.6). */}
+      <Box sx={{ mt: { xs: 5, md: 7 } }}>
+        <NewsletterBlock source={guidePath(guide)} />
+      </Box>
     </Container>
   )
 }

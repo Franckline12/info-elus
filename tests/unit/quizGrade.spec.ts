@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { findAnswersIssue, gradeQuiz, sanitizeCseName } from '@/lib/quiz/grade'
 import { toPlayableQuiz } from '@/lib/quiz/playable'
 import type { QuizQuestionInput } from '@/lib/quiz/questions'
-import { createRateLimiter } from '@/lib/quiz/rateLimit'
+import { createRateLimiter } from '@/lib/rateLimit'
 import type { Quiz } from '@/payload-types'
 
 /**
