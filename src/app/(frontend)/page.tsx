@@ -122,16 +122,25 @@ export default async function HomePage() {
         </Box>
       ) : null}
 
-      <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ mt: { xs: 5, md: 6 } }}>
-        <Grid size={{ xs: 12, md: testimonial ? 8 : 12 }}>
-          <NewsletterBlock />
-        </Grid>
-        {testimonial ? (
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TestimonialCard testimonial={testimonial} />
+      {/*
+        Section « Partage » du § 2.6 : l'inscription à la lettre hebdomadaire et
+        la parole d'élu, qui tourne d'une semaine sur l'autre parmi les
+        témoignages publiés.
+      */}
+      <Box component="section" aria-labelledby="partage" sx={{ mt: { xs: 5, md: 6 } }}>
+        <SectionHeading id="partage" title="Partage" />
+
+        <Grid container spacing={{ xs: 2.5, md: 3 }}>
+          <Grid size={{ xs: 12, md: testimonial ? 8 : 12 }}>
+            <NewsletterBlock source="/" component="h3" />
           </Grid>
-        ) : null}
-      </Grid>
+          {testimonial ? (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TestimonialCard testimonial={testimonial} />
+            </Grid>
+          ) : null}
+        </Grid>
+      </Box>
     </Container>
   )
 }

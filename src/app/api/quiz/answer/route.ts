@@ -1,6 +1,7 @@
-import { jsonError, readJsonBody, readQuizReference, tooManyRequests } from '@/lib/quiz/api'
+import { jsonError, readJsonBody, tooManyRequests } from '@/lib/api'
+import { readQuizReference } from '@/lib/quiz/api'
 import { correctIndexOf, pointsOf } from '@/lib/quiz/questions'
-import { clientKey, createRateLimiter } from '@/lib/quiz/rateLimit'
+import { clientKey, createRateLimiter } from '@/lib/rateLimit'
 import { findPublishedQuiz } from '@/lib/queries/quizzes'
 
 /**

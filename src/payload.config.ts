@@ -18,7 +18,9 @@ import { Quizzes } from './collections/Quizzes'
 import { QuizResults } from './collections/QuizResults'
 import { Providers } from './collections/Providers'
 import { Testimonials } from './collections/Testimonials'
+import { Subscribers } from './collections/Subscribers'
 import { fr } from '@payloadcms/translations/languages/fr'
+import { emailAdapter } from './lib/email/adapter'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -69,8 +71,10 @@ export default buildConfig({
     QuizResults,
     Providers,
     Testimonials,
+    Subscribers,
   ],
   editor: lexicalEditor(),
+  email: emailAdapter(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
