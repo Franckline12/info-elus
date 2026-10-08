@@ -63,7 +63,7 @@ export function ArticleCard({
           <Box sx={{ mb: 1.25 }}>
             <CategoryLabel
               name={category.name}
-              href={category.slug ? categoryPath(article.type, category.slug) : undefined}
+              href={category.slug ? categoryPath(category.slug) : undefined}
             />
           </Box>
         ) : null}

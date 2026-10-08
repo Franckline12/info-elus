@@ -174,10 +174,31 @@ export async function getFeaturedNews(): Promise<Article | null> {
   return latest.docs[0] ?? null
 }
 
-/** Fil d'actualité chronologique, hors documents explicitement écartés. */
-export async function getLatestNews(limit = 4, excludeIds: number[] = []): Promise<Article[]> {
-  const { docs } = await getArticles({ type: 'news', limit, excludeIds })
-  return docs
+export type GetLatestNewsArgs = {
+  page?: number
+  limit?: number
+  /**
+   * Actualité déjà affichée en grand format : elle est écartée du fil pour ne pas
+   * y figurer deux fois (§ 2.3).
+   */
+  excludeId?: number | null
+}
+
+/**
+ * Fil d'actualité chronologique et paginé. Aucun filtre de catégorie ni de tag :
+ * un fil se lit dans l'ordre, les filtres sont portés par `/articles`.
+ */
+export async function getLatestNews({
+  page = 1,
+  limit = 10,
+  excludeId,
+}: GetLatestNewsArgs = {}): Promise<PaginatedDocs<Article>> {
+  return getArticles({
+    type: 'news',
+    page,
+    limit,
+    excludeIds: typeof excludeId === 'number' ? [excludeId] : [],
+  })
 }
 
 /**

@@ -2,6 +2,8 @@ import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 
 import ArticleCard from '@/components/article/ArticleCard'
+import FeaturedArticle from '@/components/article/FeaturedArticle'
+import NewsFeed from '@/components/article/NewsFeed'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
 import GuideCard from '@/components/guide/GuideCard'
@@ -14,35 +16,46 @@ import FeaturedQuiz from '@/components/quiz/FeaturedQuiz'
 import QuizCounter from '@/components/quiz/QuizCounter'
 import SectionHeading from '@/components/SectionHeading'
 import VisuallyHidden from '@/components/VisuallyHidden'
-import { getArticles, getFeaturedOnHome } from '@/lib/queries/articles'
+import {
+  getArticles,
+  getFeaturedNews,
+  getFeaturedOnHome,
+  getLatestNews,
+} from '@/lib/queries/articles'
 import { getGuidesForHome } from '@/lib/queries/guides'
 import { getQuizStats } from '@/lib/queries/quizStats'
 import { getCurrentQuiz } from '@/lib/queries/quizzes'
 import { getTestimonial } from '@/lib/queries/testimonials'
-import { guidesPath, quizzesPath } from '@/lib/routes'
+import { guidesPath, listingPath, quizzesPath } from '@/lib/routes'
 import { siteName, siteTagline } from '@/lib/site'
 
 /** Page statique régénérée à la demande par les hooks des collections. */
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const [featured, guides, testimonial, currentQuiz, quizStats] = await Promise.all([
+  const [featured, guides, testimonial, currentQuiz, quizStats, featuredNews] = await Promise.all([
     getFeaturedOnHome(1),
     getGuidesForHome(8),
     getTestimonial(),
     getCurrentQuiz(),
     getQuizStats(),
+    getFeaturedNews(),
   ])
 
   // Le bandeau reprend l'article coché « À la une » ; sans cochage, le plus
   // récent fait l'ouverture — aucun contenu n'est fabriqué pour combler le vide.
   const heroFromFeatured = featured[0] ?? null
 
-  const { docs: latestArticles } = await getArticles({
-    type: 'article',
-    limit: 4,
-    excludeIds: heroFromFeatured ? [heroFromFeatured.id] : [],
-  })
+  // Même grand format et même fil que `/actualite` : l'accueil n'affiche pas une
+  // autre sélection d'actualités que la rubrique (§ 2.3).
+  const [{ docs: latestArticles }, { docs: recentNews }] = await Promise.all([
+    getArticles({
+      type: 'article',
+      limit: 4,
+      excludeIds: heroFromFeatured ? [heroFromFeatured.id] : [],
+    }),
+    getLatestNews({ limit: 3, excludeId: featuredNews?.id }),
+  ])
 
   const hero = heroFromFeatured ?? latestArticles[0] ?? null
   const recentArticles = (heroFromFeatured ? latestArticles : latestArticles.slice(1)).slice(0, 3)
@@ -64,6 +77,25 @@ export default async function HomePage() {
       <Box sx={{ mt: { xs: 3, md: 4 } }}>
         <SectionShortcuts />
       </Box>
+
+      {featuredNews ? (
+        <Box component="section" aria-labelledby="actualite" sx={{ mt: { xs: 5, md: 6 } }}>
+          <SectionHeading
+            id="actualite"
+            title="Actualité"
+            href={listingPath('news')}
+            linkLabel="Voir toute l’actualité"
+          />
+
+          <FeaturedArticle article={featuredNews} headingLevel="h3" priority={false} />
+
+          {recentNews.length > 0 ? (
+            <Box sx={{ mt: { xs: 3, md: 4 } }}>
+              <NewsFeed articles={recentNews} />
+            </Box>
+          ) : null}
+        </Box>
+      ) : null}
 
       {guides.length > 0 ? (
         <Box component="section" aria-labelledby="guides-cse" sx={{ mt: { xs: 5, md: 6 } }}>

@@ -8,6 +8,31 @@ export type SeedTheme = {
   color: Theme['color']
 }
 
+export type SeedTaxonomy = {
+  slug: string
+  name: string
+}
+
+/**
+ * Catégories d'articles et d'actualité (§ 2.1). Partagées par les deux types de
+ * la collection Articles : un article de fond et une actualité se classent dans
+ * la même taxonomie.
+ */
+export const CATEGORIES: SeedTaxonomy[] = [
+  { slug: 'negociation', name: 'Négociation' },
+  { slug: 'sante-securite-au-travail', name: 'Santé & sécurité au travail' },
+  { slug: 'budget', name: 'Budget' },
+  { slug: 'elections', name: 'Élections' },
+]
+
+/** Tags transverses aux articles, à l'actualité et aux guides (§ 2.3, § 4.2). */
+export const TAGS: SeedTaxonomy[] = [
+  { slug: 'mandat', name: 'Mandat' },
+  { slug: 'budget', name: 'Budget' },
+  { slug: 'prevention', name: 'Prévention' },
+  { slug: 'procedure', name: 'Procédure' },
+]
+
 /**
  * Crée les thèmes manquants et renvoie la correspondance slug → identifiant.
  *
@@ -40,6 +65,74 @@ export const ensureThemes = async (
     })
     payload.logger.info(`Thème créé : ${theme.name}`)
     map.set(theme.slug, created.id)
+  }
+
+  return map
+}
+
+/**
+ * Crée les catégories manquantes et renvoie la correspondance slug → identifiant.
+ *
+ * Les catégories déjà saisies dans l'admin sont réutilisées telles quelles : le
+ * seed ne renomme ni ne remplace une taxonomie qu'un rédacteur a pu enrichir.
+ */
+export const ensureCategories = async (
+  payload: Payload,
+  categories: SeedTaxonomy[] = CATEGORIES,
+): Promise<Map<string, number>> => {
+  const map = new Map<string, number>()
+
+  for (const category of categories) {
+    const { docs } = await payload.find({
+      collection: 'categories',
+      where: { slug: { equals: category.slug } },
+      limit: 1,
+      depth: 0,
+    })
+
+    const existing = docs[0]
+    if (existing) {
+      map.set(category.slug, existing.id)
+      continue
+    }
+
+    const created = await payload.create({
+      collection: 'categories',
+      data: { name: category.name, slug: category.slug },
+    })
+    payload.logger.info(`Catégorie créée : ${category.name}`)
+    map.set(category.slug, created.id)
+  }
+
+  return map
+}
+
+/** Même contrat que `ensureCategories`, pour les tags. */
+export const ensureTags = async (
+  payload: Payload,
+  tags: SeedTaxonomy[] = TAGS,
+): Promise<Map<string, number>> => {
+  const map = new Map<string, number>()
+
+  for (const tag of tags) {
+    const { docs } = await payload.find({
+      collection: 'tags',
+      where: { slug: { equals: tag.slug } },
+      limit: 1,
+      depth: 0,
+    })
+
+    const existing = docs[0]
+    if (existing) {
+      map.set(tag.slug, existing.id)
+      continue
+    }
+
+    const created = await payload.create({
+      collection: 'tags',
+      data: { name: tag.name, slug: tag.slug },
+    })
+    map.set(tag.slug, created.id)
   }
 
   return map
