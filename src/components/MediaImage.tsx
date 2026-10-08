@@ -12,6 +12,11 @@ type Props = {
   ratio?: number
   /** L'image remplit toute la hauteur de son parent (colonne d'un bandeau). */
   cover?: boolean
+  /**
+   * `contain` pour les visuels qu'on ne peut pas rogner — un logo tronqué n'est
+   * plus le logo. `cover` (défaut) pour les photographies.
+   */
+  fit?: 'cover' | 'contain'
   priority?: boolean
   sx?: SxProps<Theme>
 }
@@ -21,7 +26,15 @@ type Props = {
  * peuplée : `alt` est obligatoire côté CMS, on ne fabrique jamais d'alternative
  * textuelle vide (§ 4.5).
  */
-export function MediaImage({ media, sizes, ratio, cover = false, priority = false, sx }: Props) {
+export function MediaImage({
+  media,
+  sizes,
+  ratio,
+  cover = false,
+  fit = 'cover',
+  priority = false,
+  sx,
+}: Props) {
   if (!media || typeof media !== 'object' || !media.url) return null
 
   if (!ratio && !cover) {
@@ -55,7 +68,7 @@ export function MediaImage({ media, sizes, ratio, cover = false, priority = fals
         fill
         sizes={sizes}
         priority={priority}
-        style={{ objectFit: 'cover' }}
+        style={{ objectFit: fit }}
       />
     </Box>
   )

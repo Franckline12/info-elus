@@ -1,5 +1,5 @@
 import { formatSlug } from '@/hooks/formatSlug'
-import type { Article } from '@/payload-types'
+import type { Article, Guide } from '@/payload-types'
 
 export type TocEntry = {
   id: string
@@ -44,4 +44,19 @@ export function extractToc(content: Article['content']): TocEntry[] {
   }
 
   return entries
+}
+
+/**
+ * Sommaire d'un guide : contrairement aux articles, la structure est explicite
+ * dans le CMS. Chaque section porte son ancre, rendue unique à l'enregistrement
+ * (`uniqueSectionAnchors`) — aucune déduction n'est nécessaire ici.
+ */
+export function guideToc(sections: Guide['sections']): TocEntry[] {
+  return (sections ?? [])
+    .filter((section) => Boolean(section.anchor) && Boolean(section.heading))
+    .map((section) => ({
+      id: section.anchor as string,
+      label: section.heading,
+      level: 2 as const,
+    }))
 }

@@ -7,7 +7,7 @@ import ArticleCard from '@/components/article/ArticleCard'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
 import GuideCard from '@/components/guide/GuideCard'
-import SearchField from '@/components/SearchField'
+import SearchBar from '@/components/SearchBar'
 import SectionHeading from '@/components/SectionHeading'
 import { searchContent } from '@/lib/queries/search'
 import { searchPath } from '@/lib/routes'
@@ -45,13 +45,12 @@ export default async function SearchPage({ searchParams }: Props) {
         Articles, actualité et guides : retrouvez tous les contenus d’Infos Élus.
       </Typography>
 
-      <Box sx={{ maxWidth: 520 }}>
-        <SearchField
+      <Box>
+        <SearchBar
           action={searchPath}
           label="Votre recherche"
           placeholder="Droit du travail, budget, élections…"
           defaultValue={term}
-          fullWidth
         />
       </Box>
 

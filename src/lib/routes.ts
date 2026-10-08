@@ -27,10 +27,6 @@ export const providerPath = (provider: { slug?: string | null }): string =>
 /** Listing des guides filtré sur un thème. */
 export const themePath = (slug: string): string => `${guidesPath}?theme=${encodeURIComponent(slug)}`
 
-/** Listing de l'annuaire filtré sur une catégorie de prestataire. */
-export const providerCategoryPath = (value: string): string =>
-  `${providersPath}?categorie=${encodeURIComponent(value)}`
-
 /** URL publique d'un document, déterminée par son type. */
 export const articlePath = (article: Pick<Article, 'type'> & { slug?: string | null }): string =>
   `${listingPath(article.type)}/${article.slug ?? ''}`
@@ -49,15 +45,64 @@ export type ListingFilters = {
   tagSlug?: string
 }
 
-/** Construit l'URL d'une page de listing en conservant les filtres actifs. */
+/**
+ * URL d'une page de listing, quel que soit le listing : les paramètres vides
+ * sont omis, et la page 1 reste l'URL nue pour ne pas dédoubler l'adresse
+ * canonique aux yeux des moteurs.
+ */
+export const pagePath = (
+  basePath: string,
+  page?: number,
+  params: Record<string, string | undefined> = {},
+): string => {
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(params)) {
+    if (value) search.set(key, value)
+  }
+  if (page && page > 1) search.set('page', String(page))
+  const query = search.toString()
+  return query ? `${basePath}?${query}` : basePath
+}
+
+export type ProviderFilters = {
+  page?: number
+  categorySlug?: string
+  /** Zone d'intervention, valeur de `interventionAreaOptions`. */
+  area?: string
+}
+
+/**
+ * URL de l'annuaire des prestataires : catégorie, zone et page voyagent
+ * ensemble, pour que choisir un filtre n'efface pas l'autre (§ 2.4).
+ */
+export const providersPagePath = ({ page, categorySlug, area }: ProviderFilters = {}): string =>
+  pagePath(providersPath, page, { categorie: categorySlug, zone: area })
+
+/** Listing de l'annuaire filtré sur une seule catégorie. */
+export const providerCategoryPath = (value: string): string =>
+  providersPagePath({ categorySlug: value })
+
+/** Construit l'URL d'une page de listing d'articles en conservant les filtres actifs. */
 export const listingPagePath = (
   type: ContentType,
   { page, categorySlug, tagSlug }: ListingFilters = {},
-): string => {
-  const params = new URLSearchParams()
-  if (categorySlug) params.set('categorie', categorySlug)
-  if (tagSlug) params.set('tag', tagSlug)
-  if (page && page > 1) params.set('page', String(page))
-  const query = params.toString()
-  return query ? `${listingPath(type)}?${query}` : listingPath(type)
+): string => pagePath(listingPath(type), page, { categorie: categorySlug, tag: tagSlug })
+
+/**
+ * Numéro de page lu dans l'URL. Toute valeur absurde (`?page=0`, `?page=abc`)
+ * ramène à la première page plutôt qu'à une erreur.
+ */
+export const parsePage = (value?: string): number => {
+  const page = Number.parseInt(value ?? '1', 10)
+  return Number.isNaN(page) || page < 1 ? 1 : page
 }
+
+/** Construit l'URL d'une page de l'historique des quiz (§ 2.5). */
+export const quizzesPagePath = (page?: number): string => pagePath(quizzesPath, page)
+
+/** Parcours de la lettre hebdomadaire (§ 2.6). */
+export const newsletterConfirmationPath = (token: string): string =>
+  `/newsletter/confirmation?token=${encodeURIComponent(token)}`
+
+export const newsletterUnsubscribePath = (token: string): string =>
+  `/newsletter/desinscription?token=${encodeURIComponent(token)}`

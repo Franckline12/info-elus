@@ -44,7 +44,11 @@ test.describe('Articles et actualité', () => {
     await page.goto(`${BASE}/articles`)
 
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Articles')
-    await expect(page.getByRole('navigation', { name: 'Filtrer par catégorie' })).toBeVisible()
+
+    // Depuis la barre de recherche scindée, le filtre est un menu déroulant
+    // porté par `details`/`summary`, et non plus un repère de navigation.
+    await expect(page.getByRole('search')).toBeVisible()
+    await expect(page.getByLabel('Filtrer par catégorie')).toBeVisible()
   })
 
   test('le listing de l’actualité répond et porte son titre', async ({ page }) => {

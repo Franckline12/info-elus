@@ -10,22 +10,28 @@ import HomeHero from '@/components/home/HomeHero'
 import SectionShortcuts from '@/components/home/SectionShortcuts'
 import TestimonialCard from '@/components/home/TestimonialCard'
 import NewsletterBlock from '@/components/NewsletterBlock'
+import FeaturedQuiz from '@/components/quiz/FeaturedQuiz'
+import QuizCounter from '@/components/quiz/QuizCounter'
 import SectionHeading from '@/components/SectionHeading'
 import VisuallyHidden from '@/components/VisuallyHidden'
 import { getArticles, getFeaturedOnHome } from '@/lib/queries/articles'
-import { getFeaturedGuides } from '@/lib/queries/guides'
+import { getGuidesForHome } from '@/lib/queries/guides'
+import { getQuizStats } from '@/lib/queries/quizStats'
+import { getCurrentQuiz } from '@/lib/queries/quizzes'
 import { getTestimonial } from '@/lib/queries/testimonials'
-import { guidesPath } from '@/lib/routes'
+import { guidesPath, quizzesPath } from '@/lib/routes'
 import { siteName, siteTagline } from '@/lib/site'
 
 /** Page statique régénérée à la demande par les hooks des collections. */
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const [featured, guides, testimonial] = await Promise.all([
+  const [featured, guides, testimonial, currentQuiz, quizStats] = await Promise.all([
     getFeaturedOnHome(1),
-    getFeaturedGuides(8),
+    getGuidesForHome(8),
     getTestimonial(),
+    getCurrentQuiz(),
+    getQuizStats(),
   ])
 
   // Le bandeau reprend l'article coché « À la une » ; sans cochage, le plus
@@ -76,6 +82,27 @@ export default async function HomePage() {
         </Box>
       ) : null}
 
+      {/*
+        Seule zone ocre de l'accueil (§ 5.3) : l'accent reste réservé à la
+        rubrique Jeux & Quiz, ici sous forme de filets et d'un bouton.
+      */}
+      {currentQuiz ? (
+        <Box component="section" aria-labelledby="jeux-quiz" sx={{ mt: { xs: 5, md: 6 } }}>
+          <SectionHeading
+            id="jeux-quiz"
+            title="Jeux & Quiz"
+            href={quizzesPath}
+            linkLabel="Voir tous les quiz"
+          />
+
+          <FeaturedQuiz quiz={currentQuiz} component="h3" />
+
+          <Box sx={{ mt: { xs: 2, md: 2.5 } }}>
+            <QuizCounter stats={quizStats} />
+          </Box>
+        </Box>
+      ) : null}
+
       {recentArticles.length > 0 ? (
         <Box component="section" aria-labelledby="articles-recents" sx={{ mt: { xs: 5, md: 6 } }}>
           <SectionHeading
@@ -95,16 +122,25 @@ export default async function HomePage() {
         </Box>
       ) : null}
 
-      <Grid container spacing={{ xs: 2.5, md: 3 }} sx={{ mt: { xs: 5, md: 6 } }}>
-        <Grid size={{ xs: 12, md: testimonial ? 8 : 12 }}>
-          <NewsletterBlock />
-        </Grid>
-        {testimonial ? (
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TestimonialCard testimonial={testimonial} />
+      {/*
+        Section « Partage » du § 2.6 : l'inscription à la lettre hebdomadaire et
+        la parole d'élu, qui tourne d'une semaine sur l'autre parmi les
+        témoignages publiés.
+      */}
+      <Box component="section" aria-labelledby="partage" sx={{ mt: { xs: 5, md: 6 } }}>
+        <SectionHeading id="partage" title="Partage" />
+
+        <Grid container spacing={{ xs: 2.5, md: 3 }}>
+          <Grid size={{ xs: 12, md: testimonial ? 8 : 12 }}>
+            <NewsletterBlock source="/" component="h3" />
           </Grid>
-        ) : null}
-      </Grid>
+          {testimonial ? (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TestimonialCard testimonial={testimonial} />
+            </Grid>
+          ) : null}
+        </Grid>
+      </Box>
     </Container>
   )
 }

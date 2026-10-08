@@ -3,14 +3,13 @@ import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
-import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined'
 
 import AppLink from '@/components/AppLink'
 import MediaImage from '@/components/MediaImage'
 import { guidePath, themePath } from '@/lib/routes'
 import { asTheme, themeColor } from '@/lib/themeColor'
 import type { Guide } from '@/payload-types'
-import { colors } from '@/theme/tokens'
+import { cardHoverSx, colors } from '@/theme/tokens'
 
 type Props = {
   guide: Guide
@@ -19,13 +18,15 @@ type Props = {
 
 /**
  * Vignette de guide (maquette, rail « Guides CSE » et page listing) : image,
- * badge de thème, titre, temps de lecture. La couleur du thème est portée par un
- * filet vertical, conformément au § 5.3 — pas de numérotation.
+ * badge de thème, titre, temps de lecture. La couleur du thème est portée par le
+ * badge seul — pas de filet vertical, pas de numérotation. Au survol, la carte
+ * se détache par une élévation neutre plutôt que par une bordure bleue.
  */
 export function GuideCard({ guide, priority = false }: Props) {
   const theme = asTheme(guide.theme)
   const href = guidePath(guide)
   const accent = themeColor(theme?.color)
+  const sectionCount = guide.sections?.length ?? 0
 
   return (
     <Card
@@ -35,9 +36,7 @@ export function GuideCard({ guide, priority = false }: Props) {
         flexDirection: 'column',
         height: '100%',
         overflow: 'hidden',
-        borderLeft: `3px solid ${accent}`,
-        transition: 'border-color 120ms ease',
-        '&:hover': { borderColor: 'primary.main', borderLeftColor: accent },
+        ...cardHoverSx,
       }}
     >
       {guide.featuredImage ? (
@@ -74,22 +73,18 @@ export function GuideCard({ guide, priority = false }: Props) {
           </AppLink>
         </Typography>
 
-        {typeof guide.readingTime === 'number' && guide.readingTime > 0 ? (
+        {sectionCount > 0 ? (
           <Typography
             component="p"
             sx={{
               mt: 'auto',
               pt: 0.5,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 0.5,
               fontSize: '0.8125rem',
               color: 'text.secondary',
               m: 0,
             }}
           >
-            <AccessTimeOutlinedIcon aria-hidden sx={{ fontSize: '0.95em', opacity: 0.8 }} />
-            {guide.readingTime} min de lecture
+            {sectionCount} section{sectionCount > 1 ? 's' : ''}
           </Typography>
         ) : null}
       </CardContent>

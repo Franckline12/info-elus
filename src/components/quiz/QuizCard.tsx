@@ -6,20 +6,22 @@ import Typography from '@mui/material/Typography'
 import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined'
 
 import AppLink from '@/components/AppLink'
+import type { QuizSummary } from '@/lib/quiz/playable'
 import { quizPath } from '@/lib/routes'
-import { asTheme } from '@/lib/themeColor'
-import type { Quiz } from '@/payload-types'
 import { colors } from '@/theme/tokens'
 
 type Props = {
-  quiz: Quiz
+  quiz: QuizSummary
 }
 
-/** Vignette de quiz : l'ocre y est la couleur d'accent de la rubrique (§ 5.3). */
+/**
+ * Vignette de quiz : l'ocre y est la couleur d'accent de la rubrique (§ 5.3).
+ *
+ * La vignette travaille sur `QuizSummary`, pas sur le document Payload : ni les
+ * options, ni les bonnes réponses ne transitent par elle.
+ */
 export function QuizCard({ quiz }: Props) {
-  const theme = asTheme(quiz.theme)
   const href = quizPath(quiz)
-  const questionCount = quiz.questions?.length ?? 0
 
   return (
     <Card
@@ -36,7 +38,7 @@ export function QuizCard({ quiz }: Props) {
             aria-hidden
             sx={{ color: colors.accentQuiz, fontSize: '1.1rem' }}
           />
-          {theme ? <Chip label={theme.name} size="small" /> : null}
+          {quiz.theme ? <Chip label={quiz.theme.name} size="small" /> : null}
         </Box>
 
         <Typography variant="h4" component="h3" sx={{ fontSize: '1rem', mb: 1 }}>
@@ -45,16 +47,18 @@ export function QuizCard({ quiz }: Props) {
           </AppLink>
         </Typography>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-          {quiz.excerpt}
-        </Typography>
+        {quiz.intro ? (
+          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
+            {quiz.intro}
+          </Typography>
+        ) : null}
 
-        {questionCount > 0 ? (
+        {quiz.questionCount > 0 ? (
           <Typography
             component="p"
             sx={{ mt: 'auto', fontSize: '0.8125rem', color: 'text.secondary', m: 0 }}
           >
-            {questionCount} question{questionCount > 1 ? 's' : ''}
+            {quiz.questionCount} question{quiz.questionCount > 1 ? 's' : ''}
           </Typography>
         ) : null}
       </CardContent>

@@ -9,6 +9,7 @@ import CategoryLabel from '@/components/CategoryLabel'
 import Container from '@/components/Container'
 import JsonLd from '@/components/JsonLd'
 import MediaImage from '@/components/MediaImage'
+import NewsletterBlock from '@/components/NewsletterBlock'
 import RichText from '@/components/RichText'
 import TagList from '@/components/TagList'
 import type { TagListItem } from '@/components/TagList'
@@ -160,6 +161,11 @@ export function ArticleDetail({ article, related }: Props) {
       </Grid>
 
       <RelatedArticles articles={related} />
+
+      {/* Inscription à la lettre hebdomadaire en bas de contenu (§ 2.6). */}
+      <Box sx={{ mt: { xs: 5, md: 7 } }}>
+        <NewsletterBlock source={articlePath(article)} />
+      </Box>
     </Container>
   )
 }

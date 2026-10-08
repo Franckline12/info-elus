@@ -1,6 +1,7 @@
 import type { Access } from 'payload'
 
 export { loggedIn } from './loggedIn'
+export { publishedFlagOrLoggedIn } from './publishedFlagOrLoggedIn'
 export { publishedOrLoggedIn } from './publishedOrLoggedIn'
 
 /** Lecture publique. */

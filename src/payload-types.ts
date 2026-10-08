@@ -75,8 +75,10 @@ export interface Config {
     articles: Article;
     guides: Guide;
     quizzes: Quiz;
+    'quiz-results': QuizResult;
     providers: Provider;
     testimonials: Testimonial;
+    subscribers: Subscriber;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,8 +94,10 @@ export interface Config {
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     guides: GuidesSelect<false> | GuidesSelect<true>;
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
+    'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -298,43 +302,58 @@ export interface Guide {
   id: number;
   title: string;
   /**
-   * Résumé court affiché sous le titre et dans les listes. 300 caractères maximum.
+   * Affiché sous le titre, dans le listing et dans le rail de l’accueil. 300 caractères maximum.
    */
-  excerpt: string;
+  summary: string;
   /**
-   * Illustration de tête, reprise dans le rail de l’accueil.
+   * Illustration de tête, reprise dans l’aperçu social.
    */
   featuredImage?: (number | null) | Media;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
   /**
-   * Détermine la couleur de bordure du guide (§ 5.3).
+   * Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.
    */
-  theme: number | Theme;
-  tags?: (number | Tag)[] | null;
+  sections: {
+    heading: string;
+    /**
+     * Dérivée du titre de la section, rendue unique automatiquement. Elle sert de lien dans le sommaire.
+     */
+    anchor?: string | null;
+    content: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
   /**
-   * Modèles, PV type… affichés dans la colonne du guide.
+   * Modèles, PV type… affichés en fin de guide.
    */
   resources?:
     | {
         label: string;
         file: number | Media;
+        /**
+         * Précision facultative affichée sous l’intitulé.
+         */
+        description?: string | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Détermine la couleur de bordure du guide (§ 5.3).
+   */
+  theme: number | Theme;
+  tags?: (number | Tag)[] | null;
   meta?: {
     title?: string | null;
     description?: string | null;
@@ -355,10 +374,6 @@ export interface Guide {
    * Les guides cochés ouvrent le rail « Guides CSE » de la page d’accueil.
    */
   featuredOnHome?: boolean | null;
-  /**
-   * Calculé automatiquement à partir du corps du guide.
-   */
-  readingTime?: number | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -371,10 +386,20 @@ export interface Quiz {
   id: number;
   title: string;
   /**
-   * Phrase d’accroche affichée avant de lancer le quiz.
+   * Phrase d’accroche affichée avant de lancer le quiz et reprise dans la vignette du listing. 300 caractères maximum.
    */
-  excerpt: string;
-  theme?: (number | null) | Theme;
+  intro?: string | null;
+  /**
+   * Classe le quiz dans la même taxonomie que les guides.
+   */
+  theme: number | Theme;
+  /**
+   * Lundi de la semaine concernée. Le quiz mis en avant est le plus récent dont la semaine est arrivée.
+   */
+  week: string;
+  /**
+   * Chaque question doit compter au moins deux réponses proposées et une seule réponse correcte.
+   */
   questions: {
     prompt: string;
     options: {
@@ -383,11 +408,23 @@ export interface Quiz {
       id?: string | null;
     }[];
     /**
-     * Affichée après validation de la réponse. Facultative.
+     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz.
      */
     explanation?: string | null;
+    /**
+     * Laissez 1 sauf si la question doit peser davantage dans le score.
+     */
+    points?: number | null;
     id?: string | null;
   }[];
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
@@ -401,32 +438,125 @@ export interface Quiz {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-results".
+ */
+export interface QuizResult {
+  id: number;
+  quiz: number | Quiz;
+  /**
+   * Points obtenus, recalculés par le serveur.
+   */
+  score: number;
+  /**
+   * Points maximum du quiz au moment de la partie.
+   */
+  total: number;
+  /**
+   * Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.
+   */
+  cseName?: string | null;
+  playedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Annuaire des partenaires des élus. Une fiche n’apparaît sur le site qu’une fois cochée « Visible sur le site ».
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "providers".
  */
 export interface Provider {
   id: number;
   name: string;
+  /**
+   * Facultatif : à défaut, l’annuaire affiche les initiales du prestataire.
+   */
   logo?: (number | null) | Media;
-  description: string;
-  category: 'formation' | 'legal' | 'accounting' | 'leisure' | 'events';
   /**
-   * Par exemple « Île-de-France » ou « France entière ».
+   * Une à deux phrases, affichées dans l’annuaire et en tête de la fiche. 200 caractères maximum.
    */
-  area?: string | null;
+  shortDescription: string;
   /**
-   * URL complète, avec https://
+   * Facultatif : le détail de l’offre, affiché sur la fiche.
    */
-  website?: string | null;
-  email?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  category: 'training' | 'legal' | 'accounting' | 'ticketing' | 'events';
+  /**
+   * Une ou plusieurs régions. « France entière » suffit pour un prestataire national : il remonte alors sur toutes les régions.
+   */
+  interventionAreas?:
+    | (
+        | 'france'
+        | 'auvergne-rhone-alpes'
+        | 'bourgogne-franche-comte'
+        | 'bretagne'
+        | 'centre-val-de-loire'
+        | 'corse'
+        | 'grand-est'
+        | 'hauts-de-france'
+        | 'ile-de-france'
+        | 'normandie'
+        | 'nouvelle-aquitaine'
+        | 'occitanie'
+        | 'pays-de-la-loire'
+        | 'provence-alpes-cote-d-azur'
+        | 'guadeloupe'
+        | 'guyane'
+        | 'martinique'
+        | 'la-reunion'
+        | 'mayotte'
+      )[]
+    | null;
+  /**
+   * Coordonnées publiées telles quelles sur la fiche.
+   */
+  contact?: {
+    /**
+     * Facultatif : la personne à joindre chez le prestataire.
+     */
+    contactName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    /**
+     * URL complète, avec https://
+     */
+    website?: string | null;
+  };
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
-  publishedAt?: string | null;
+  /**
+   * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le prestataire n’apparaît pas dans l’annuaire public.
+   */
+  published?: boolean | null;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -449,6 +579,38 @@ export interface Testimonial {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Inscriptions à la lettre hebdomadaire. Seules les adresses « Confirmé » ont donné leur consentement (double opt-in) et peuvent être contactées.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  /**
+   * Passe à « Confirmé » quand la personne clique sur le lien reçu par email. Ne le modifiez pas à la main : ce serait inscrire quelqu’un sans son consentement.
+   */
+  status: 'pending' | 'confirmed' | 'unsubscribed';
+  confirmationToken?: string | null;
+  /**
+   * Au-delà, le lien de confirmation ne fonctionne plus (7 jours).
+   */
+  tokenExpiresAt?: string | null;
+  unsubscribeToken?: string | null;
+  subscribedAt?: string | null;
+  /**
+   * Preuve du consentement à conserver (§ 4.4).
+   */
+  confirmedAt?: string | null;
+  unsubscribedAt?: string | null;
+  /**
+   * Page depuis laquelle l’inscription a été demandée.
+   */
+  source?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -507,12 +669,20 @@ export interface PayloadLockedDocument {
         value: number | Quiz;
       } | null)
     | ({
+        relationTo: 'quiz-results';
+        value: number | QuizResult;
+      } | null)
+    | ({
         relationTo: 'providers';
         value: number | Provider;
       } | null)
     | ({
         relationTo: 'testimonials';
         value: number | Testimonial;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -663,18 +833,26 @@ export interface ArticlesSelect<T extends boolean = true> {
  */
 export interface GuidesSelect<T extends boolean = true> {
   title?: T;
-  excerpt?: T;
+  summary?: T;
   featuredImage?: T;
-  content?: T;
-  theme?: T;
-  tags?: T;
+  sections?:
+    | T
+    | {
+        heading?: T;
+        anchor?: T;
+        content?: T;
+        id?: T;
+      };
   resources?:
     | T
     | {
         label?: T;
         file?: T;
+        description?: T;
         id?: T;
       };
+  theme?: T;
+  tags?: T;
   meta?:
     | T
     | {
@@ -685,7 +863,6 @@ export interface GuidesSelect<T extends boolean = true> {
   slug?: T;
   publishedAt?: T;
   featuredOnHome?: T;
-  readingTime?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -696,8 +873,9 @@ export interface GuidesSelect<T extends boolean = true> {
  */
 export interface QuizzesSelect<T extends boolean = true> {
   title?: T;
-  excerpt?: T;
+  intro?: T;
   theme?: T;
+  week?: T;
   questions?:
     | T
     | {
@@ -710,7 +888,15 @@ export interface QuizzesSelect<T extends boolean = true> {
               id?: T;
             };
         explanation?: T;
+        points?: T;
         id?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
       };
   slug?: T;
   publishedAt?: T;
@@ -720,21 +906,47 @@ export interface QuizzesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quiz-results_select".
+ */
+export interface QuizResultsSelect<T extends boolean = true> {
+  quiz?: T;
+  score?: T;
+  total?: T;
+  cseName?: T;
+  playedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "providers_select".
  */
 export interface ProvidersSelect<T extends boolean = true> {
   name?: T;
   logo?: T;
+  shortDescription?: T;
   description?: T;
   category?: T;
-  area?: T;
-  website?: T;
-  email?: T;
+  interventionAreas?: T;
+  contact?:
+    | T
+    | {
+        contactName?: T;
+        email?: T;
+        phone?: T;
+        website?: T;
+      };
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
   slug?: T;
-  publishedAt?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
-  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -747,6 +959,23 @@ export interface TestimonialsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  confirmationToken?: T;
+  tokenExpiresAt?: T;
+  unsubscribeToken?: T;
+  subscribedAt?: T;
+  confirmedAt?: T;
+  unsubscribedAt?: T;
+  source?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

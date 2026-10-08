@@ -1,8 +1,10 @@
 import type { PaginatedDocs, Where } from 'payload'
 
+import type { FacetCounts } from '@/lib/filterOptions'
 import type { Article } from '@/payload-types'
 import type { ContentType } from '@/lib/routes'
 
+import { getCategories } from './categories'
 import { getPayloadClient } from './payload'
 
 /**
@@ -73,6 +75,46 @@ export async function getArticles({
     page,
     limit,
   })
+}
+
+/**
+ * Nombre d'articles publiés par catégorie, à recherche et tag constants : les
+ * compteurs du filtre. La catégorie active n'entre pas dans le calcul, sinon
+ * toutes les autres options annonceraient zéro.
+ */
+export async function countArticlesByCategory({
+  type,
+  tagSlug,
+  search,
+}: {
+  type: ContentType
+  tagSlug?: string
+  search?: string
+}): Promise<FacetCounts> {
+  const payload = await getPayloadClient()
+  const categories = await getCategories()
+
+  const clauses: Where[] = [ofType(type)]
+  if (tagSlug) clauses.push({ 'tags.slug': { equals: tagSlug } })
+  if (search) clauses.push({ or: [{ title: { like: search } }, { excerpt: { like: search } }] })
+
+  const count = (extra?: Where) =>
+    payload.count({
+      collection: 'articles',
+      where: publishedWhere(...clauses, ...(extra ? [extra] : [])),
+    })
+
+  const [all, ...perCategory] = await Promise.all([
+    count(),
+    ...categories.map((category) => count({ 'category.slug': { equals: category.slug } })),
+  ])
+
+  return {
+    total: all.totalDocs,
+    byValue: Object.fromEntries(
+      categories.map((category, index) => [category.slug ?? '', perCategory[index].totalDocs]),
+    ),
+  }
 }
 
 /** Document publié d'un slug donné, à condition qu'il soit bien du type demandé. */
