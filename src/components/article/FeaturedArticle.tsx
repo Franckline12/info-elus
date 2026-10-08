@@ -13,6 +13,11 @@ import { colors } from '@/theme/tokens'
 
 type Props = {
   article: Article
+  /**
+   * Niveau du titre. `h2` quand le grand format ouvre la page (le H1 est le
+   * bandeau de rubrique), `h3` quand il est posé sous un titre de section.
+   */
+  headingLevel?: 'h2' | 'h3'
   priority?: boolean
 }
 
@@ -20,10 +25,14 @@ const asCategory = (value: Article['category']): Category | null =>
   value && typeof value === 'object' ? value : null
 
 /**
- * Grand format d'ouverture d'un listing (§ 2.3) : image à gauche, texte à
- * droite, badge « À la une » — la carte large de la maquette « Actualité ».
+ * Grand format d'ouverture du fil d'actualité (§ 2.3) : pleine largeur, grande
+ * image, catégorie, titre en grande taille, chapô complet en Source Serif 4, date
+ * et temps de lecture. C'est le point d'entrée visuel de la page.
+ *
+ * L'image passe à gauche à partir de 900px et se place au-dessus du texte en
+ * dessous, pour rester grande sans écraser le titre sur un écran étroit.
  */
-export function FeaturedArticle({ article, priority = true }: Props) {
+export function FeaturedArticle({ article, headingLevel = 'h2', priority = true }: Props) {
   const category = asCategory(article.category)
   const href = articlePath(article)
   const hasImage = Boolean(article.featuredImage)
@@ -33,29 +42,31 @@ export function FeaturedArticle({ article, priority = true }: Props) {
       component="article"
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: hasImage ? '0.85fr 1.15fr' : '1fr' },
+        gridTemplateColumns: { xs: '1fr', md: hasImage ? '1.05fr 0.95fr' : '1fr' },
         overflow: 'hidden',
       }}
     >
       {hasImage ? (
-        <AppLink
-          href={href}
-          tabIndex={-1}
-          aria-hidden
-          sx={{ display: 'block', minHeight: { xs: 180, sm: '100%' } }}
-        >
+        <AppLink href={href} tabIndex={-1} aria-hidden sx={{ display: 'block' }}>
           <MediaImage
             media={article.featuredImage}
             cover
-            sizes="(max-width: 600px) 100vw, 38vw"
+            sizes="(max-width: 900px) 100vw, 52vw"
             priority={priority}
-            sx={{ minHeight: { xs: 180, sm: '100%' } }}
+            sx={{ minHeight: { xs: 220, sm: 300, md: 360 } }}
           />
         </AppLink>
       ) : null}
 
-      <Box sx={{ p: { xs: 2.5, md: 3 } }}>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 1.5 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          p: { xs: 2.5, sm: 3, md: 4 },
+        }}
+      >
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1, mb: 2 }}>
           <Chip
             label="À la une"
             size="small"
@@ -64,22 +75,22 @@ export function FeaturedArticle({ article, priority = true }: Props) {
           {category ? (
             <CategoryLabel
               name={category.name}
-              href={category.slug ? categoryPath(article.type, category.slug) : undefined}
+              href={category.slug ? categoryPath(category.slug) : undefined}
             />
           ) : null}
         </Box>
 
         <Typography
-          variant="h2"
-          component="h3"
-          sx={{ fontSize: { xs: '1.375rem', md: '1.625rem' }, mb: 1.5 }}
+          variant="h1"
+          component={headingLevel}
+          sx={{ fontSize: 'clamp(1.5rem, 1.15rem + 1.5vw, 2.125rem)', mb: 2 }}
         >
           <AppLink href={href} underline="none" sx={{ color: 'text.primary' }}>
             {article.title}
           </AppLink>
         </Typography>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+        <Typography variant="lede" component="p" sx={{ color: 'text.secondary', mb: 2.5 }}>
           {article.excerpt}
         </Typography>
 
@@ -87,6 +98,7 @@ export function FeaturedArticle({ article, priority = true }: Props) {
           publishedAt={article.publishedAt}
           readingTime={article.readingTime}
           variant="compact"
+          emphasizeDate={article.type === 'news'}
         />
       </Box>
     </Card>

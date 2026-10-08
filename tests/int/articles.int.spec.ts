@@ -2,7 +2,12 @@ import { getPayload, type Payload } from 'payload'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import config from '@/payload.config'
-import { getArticleBySlug, getArticles, getFeaturedNews } from '@/lib/queries/articles'
+import {
+  getArticleBySlug,
+  getArticles,
+  getFeaturedNews,
+  getLatestNews,
+} from '@/lib/queries/articles'
 import type { Category } from '@/payload-types'
 
 /**
@@ -22,6 +27,7 @@ describe('Lectures publiques des articles', () => {
     slug: string
     type: 'article' | 'news'
     status: 'draft' | 'published'
+    publishedAt?: string
   }) => {
     const doc = await payload.create({
       collection: 'articles',
@@ -64,7 +70,7 @@ describe('Lectures publiques des articles', () => {
         slug: data.slug,
         type: data.type,
         _status: data.status,
-        publishedAt: '2026-01-01T00:00:00.000Z',
+        publishedAt: data.publishedAt ?? '2026-01-01T00:00:00.000Z',
       },
     })
     createdIds.push(doc.id)
@@ -96,6 +102,20 @@ describe('Lectures publiques des articles', () => {
       slug: `actu-brouillon-${SUFFIX}`,
       type: 'news',
       status: 'draft',
+    })
+    await createArticle({
+      title: 'Actualité ancienne',
+      slug: `actu-ancienne-${SUFFIX}`,
+      type: 'news',
+      status: 'published',
+      publishedAt: '2026-01-01T00:00:00.000Z',
+    })
+    await createArticle({
+      title: 'Actualité récente',
+      slug: `actu-recente-${SUFFIX}`,
+      type: 'news',
+      status: 'published',
+      publishedAt: '2026-06-01T00:00:00.000Z',
     })
   })
 
@@ -134,5 +154,43 @@ describe('Lectures publiques des articles', () => {
 
     expect(featured?.slug).not.toBe(`actu-brouillon-${SUFFIX}`)
     if (featured) expect(featured._status).toBe('published')
+  })
+
+  it('n’expose que des actualités publiées dans le fil', async () => {
+    const { docs } = await getLatestNews({ limit: 100 })
+    const slugs = docs.map((doc) => doc.slug)
+
+    expect(slugs).toContain(`actu-recente-${SUFFIX}`)
+    expect(slugs).not.toContain(`actu-brouillon-${SUFFIX}`)
+    // Le fil ne mélange jamais les articles de fond à l'actualité (§ 2.3).
+    expect(docs.every((doc) => doc.type === 'news' && doc._status === 'published')).toBe(true)
+  })
+
+  it('écarte du fil l’actualité déjà affichée en grand format', async () => {
+    const lead = await getArticleBySlug(`actu-recente-${SUFFIX}`, 'news')
+    if (!lead) throw new Error('Fixture « actualité récente » introuvable.')
+
+    const { docs } = await getLatestNews({ limit: 100, excludeId: lead.id })
+
+    expect(docs.map((doc) => doc.slug)).not.toContain(`actu-recente-${SUFFIX}`)
+  })
+
+  it('trie le fil de la plus récente à la plus ancienne', async () => {
+    const { docs } = await getLatestNews({ limit: 100 })
+    const timestamps = docs.map((doc) => (doc.publishedAt ? Date.parse(doc.publishedAt) : 0))
+
+    expect([...timestamps].sort((a, b) => b - a)).toEqual(timestamps)
+  })
+
+  it('pagine le fil : chaque page sert des documents différents', async () => {
+    const [first, second] = await Promise.all([
+      getLatestNews({ page: 1, limit: 1 }),
+      getLatestNews({ page: 2, limit: 1 }),
+    ])
+
+    expect(first.docs).toHaveLength(1)
+    expect(second.docs).toHaveLength(1)
+    expect(first.docs[0].id).not.toBe(second.docs[0].id)
+    expect(first.totalDocs).toBeGreaterThanOrEqual(2)
   })
 })

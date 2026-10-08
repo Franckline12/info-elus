@@ -31,13 +31,21 @@ export const themePath = (slug: string): string => `${guidesPath}?theme=${encode
 export const articlePath = (article: Pick<Article, 'type'> & { slug?: string | null }): string =>
   `${listingPath(article.type)}/${article.slug ?? ''}`
 
-/** Lien vers le listing filtré sur une catégorie. */
-export const categoryPath = (type: ContentType, slug: string): string =>
-  `${listingPath(type)}?categorie=${encodeURIComponent(slug)}`
+/**
+ * Lien vers le listing filtré sur une catégorie.
+ *
+ * Les filtres de taxonomie sont portés par `/articles`, quel que soit le type du
+ * contenu d'origine : le fil d'actualité, lui, se lit dans l'ordre
+ * chronologique (§ 2.3). Suivre une catégorie ou un tag depuis une actualité
+ * mène donc aux articles de fond qui traitent le même sujet — c'est l'intérêt de
+ * la taxonomie commune.
+ */
+export const categoryPath = (slug: string): string =>
+  `${listingPath('article')}?categorie=${encodeURIComponent(slug)}`
 
 /** Lien vers le listing filtré sur un tag (§ 2.3 : taxonomie commune). */
-export const tagPath = (type: ContentType, slug: string): string =>
-  `${listingPath(type)}?tag=${encodeURIComponent(slug)}`
+export const tagPath = (slug: string): string =>
+  `${listingPath('article')}?tag=${encodeURIComponent(slug)}`
 
 export type ListingFilters = {
   page?: number
@@ -96,6 +104,12 @@ export const parsePage = (value?: string): number => {
   const page = Number.parseInt(value ?? '1', 10)
   return Number.isNaN(page) || page < 1 ? 1 : page
 }
+
+/**
+ * URL d'une page du fil d'actualité (§ 2.3). Le fil n'accepte aucun filtre :
+ * seul le numéro de page varie, et la page 1 reste l'URL nue.
+ */
+export const newsPagePath = (page?: number): string => pagePath(listingPath('news'), page)
 
 /** Construit l'URL d'une page de l'historique des quiz (§ 2.5). */
 export const quizzesPagePath = (page?: number): string => pagePath(quizzesPath, page)

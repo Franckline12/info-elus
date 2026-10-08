@@ -44,6 +44,7 @@ const asMedia = (value: Media | number | null | undefined): Media | null =>
  * Seuls le fil d'Ariane, l'URL et le type JSON-LD changent d'un type à l'autre.
  */
 export function ArticleDetail({ article, related }: Props) {
+  const isNews = article.type === 'news'
   const category = asCategory(article.category)
   const tags = asTags(article.tags)
   const image = asMedia(article.featuredImage)
@@ -52,7 +53,7 @@ export function ArticleDetail({ article, related }: Props) {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': article.type === 'news' ? 'NewsArticle' : 'Article',
+    '@type': isNews ? 'NewsArticle' : 'Article',
     headline: article.title,
     description: article.excerpt,
     ...(image?.url ? { image: [absoluteUrl(image.url)] } : {}),
@@ -87,11 +88,13 @@ export function ArticleDetail({ article, related }: Props) {
         items={[
           { label: 'Accueil', href: '/' },
           { label: listingLabel(article.type), href: listingPath(article.type) },
-          ...(category
+          // Accueil › Actualité › titre : le fil d'actualité n'a pas de niveau
+          // par catégorie, puisqu'il ne se parcourt pas par catégorie.
+          ...(category && !isNews
             ? [
                 {
                   label: category.name,
-                  href: category.slug ? categoryPath(article.type, category.slug) : undefined,
+                  href: category.slug ? categoryPath(category.slug) : undefined,
                 },
               ]
             : []),
@@ -109,7 +112,7 @@ export function ArticleDetail({ article, related }: Props) {
                 <Box sx={{ mb: 2 }}>
                   <CategoryLabel
                     name={category.name}
-                    href={category.slug ? categoryPath(article.type, category.slug) : undefined}
+                    href={category.slug ? categoryPath(category.slug) : undefined}
                     tone="sand"
                   />
                 </Box>
@@ -127,11 +130,14 @@ export function ArticleDetail({ article, related }: Props) {
                 {article.excerpt}
               </Typography>
 
+              {/* Sur une actualité, la date ouvre la ligne et passe en phrase
+                  complète : c'est l'information qui situe le contenu. */}
               <ArticleMeta
                 publishedAt={article.publishedAt}
                 updatedAt={article.updatedAt}
                 readingTime={article.readingTime}
-                variant="compact"
+                variant={isNews ? 'default' : 'compact'}
+                emphasizeDate={isNews}
               />
             </Box>
 
@@ -141,7 +147,7 @@ export function ArticleDetail({ article, related }: Props) {
 
             {tags.length > 0 ? (
               <Box sx={{ mt: 5 }}>
-                <TagList tags={tags} hrefFor={(tag) => tagPath(article.type, tag.slug ?? '')} />
+                <TagList tags={tags} hrefFor={(tag) => tagPath(tag.slug ?? '')} />
               </Box>
             ) : null}
 

@@ -3,9 +3,9 @@ import os from 'os'
 import path from 'path'
 import type { Payload } from 'payload'
 
-import type { Media, Tag } from '../payload-types'
+import type { Media } from '../payload-types'
 import { callout, list, p, quote, richText, type RichTextContent } from './lexical'
-import { ensureThemes, type SeedTheme } from './taxonomies'
+import { ensureTags, ensureThemes, type SeedTheme } from './taxonomies'
 import { buildPdf } from './pdf'
 
 /**
@@ -44,13 +44,6 @@ const THEMES: SeedTheme[] = [
   { slug: 'elections', name: 'Élections', color: 'blue-bright' },
   { slug: 'budget-finances', name: 'Budget & finances', color: 'blue-mid' },
   { slug: 'sante-securite', name: 'Santé & sécurité', color: 'blue-deep' },
-]
-
-const TAGS: { slug: string; name: string }[] = [
-  { slug: 'mandat', name: 'Mandat' },
-  { slug: 'budget', name: 'Budget' },
-  { slug: 'prevention', name: 'Prévention' },
-  { slug: 'procedure', name: 'Procédure' },
 ]
 
 const RESOURCE_FILES: Record<string, { filename: string; title: string; lines: string[] }> = {
@@ -355,33 +348,6 @@ const GUIDES: SeedGuide[] = [
     ],
   },
 ]
-
-const ensureTags = async (payload: Payload): Promise<Map<string, number>> => {
-  const map = new Map<string, number>()
-
-  for (const tag of TAGS) {
-    const { docs } = await payload.find({
-      collection: 'tags',
-      where: { slug: { equals: tag.slug } },
-      limit: 1,
-      depth: 0,
-    })
-
-    const existing = docs[0] as Tag | undefined
-    if (existing) {
-      map.set(tag.slug, existing.id)
-      continue
-    }
-
-    const created = await payload.create({
-      collection: 'tags',
-      data: { name: tag.name, slug: tag.slug },
-    })
-    map.set(tag.slug, created.id)
-  }
-
-  return map
-}
 
 /** Écrit les PDF de démonstration sur disque et les téléverse dans `media`. */
 const ensureResourceFiles = async (payload: Payload): Promise<Map<string, number>> => {
