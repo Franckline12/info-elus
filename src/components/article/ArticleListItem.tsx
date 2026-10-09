@@ -8,6 +8,7 @@ import CategoryLabel from '@/components/CategoryLabel'
 import MediaImage from '@/components/MediaImage'
 import { articlePath, categoryPath } from '@/lib/routes'
 import type { Article, Category } from '@/payload-types'
+import { colors, hoverShadow, rule, surfaceBorder } from '@/theme/tokens'
 
 type Props = {
   article: Article
@@ -34,18 +35,61 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
       sx={{
         display: 'grid',
         gridTemplateColumns: article.featuredImage
-          ? { xs: '96px 1fr auto', sm: '180px 1fr auto' }
+          ? { xs: '96px 1fr auto', sm: '190px 1fr auto' }
           : '1fr auto',
-        gap: { xs: 1.5, sm: 2.5 },
+        gap: { xs: 2, sm: 3 },
         alignItems: 'center',
+        p: { xs: 1.75, sm: 2.25 },
+        bgcolor: colors.paperRaised,
+        border: `1px solid ${surfaceBorder}`,
+        borderRadius: '8px',
+        borderLeft: `4px solid ${colors.blueMid}`,
+        transition: 'all 200ms ease',
+        '&:hover': {
+          borderLeftColor: colors.blueBright,
+          borderColor: rule,
+          boxShadow: `0 4px 16px ${hoverShadow}`,
+          transform: 'translateX(3px)',
+          '& .item-thumb img': {
+            transform: 'scale(1.05)',
+          },
+          '& .item-title': {
+            color: colors.blueBright,
+          },
+          '& .item-arrow-box': {
+            bgcolor: colors.blueBright,
+            color: '#ffffff',
+            borderColor: colors.blueBright,
+          },
+        },
+        '@media (prefers-reduced-motion: reduce)': {
+          '&:hover': { transform: 'none' },
+          '&:hover .item-thumb img': { transform: 'none' },
+        },
       }}
     >
       {article.featuredImage ? (
-        <AppLink href={href} tabIndex={-1} aria-hidden sx={{ display: 'block' }}>
+        <AppLink
+          href={href}
+          tabIndex={-1}
+          aria-hidden
+          className="item-thumb"
+          sx={{
+            display: 'block',
+            overflow: 'hidden',
+            borderRadius: '6px',
+            border: `1px solid ${surfaceBorder}`,
+            position: 'relative',
+            bgcolor: colors.blueDeep,
+            '& img': {
+              transition: 'transform 400ms ease-out',
+            },
+          }}
+        >
           <MediaImage
             media={article.featuredImage}
             ratio={4 / 3}
-            sizes="(max-width: 600px) 96px, 180px"
+            sizes="(max-width: 600px) 96px, 190px"
           />
         </AppLink>
       ) : null}
@@ -60,8 +104,20 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
           </Box>
         ) : null}
 
-        <Typography variant="h4" component="h3" sx={{ fontSize: '1.0625rem', mb: 1 }}>
-          <AppLink href={href} underline="none" sx={{ color: 'text.primary' }}>
+        <Typography
+          variant="h4"
+          component="h3"
+          className="item-title"
+          sx={{
+            fontSize: { xs: '1.0625rem', sm: '1.1875rem' },
+            fontWeight: 800,
+            lineHeight: 1.3,
+            mb: 1,
+            color: colors.ink,
+            transition: 'color 160ms ease',
+          }}
+        >
+          <AppLink href={href} underline="none" sx={{ color: 'inherit' }}>
             {article.title}
           </AppLink>
         </Typography>
@@ -71,9 +127,9 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
             variant="body2"
             sx={{
               color: 'text.secondary',
-              mb: 1.25,
-              // Troncature à deux lignes : le fil garde un pas régulier quelle
-              // que soit la longueur des chapôs.
+              fontSize: '0.875rem',
+              lineHeight: 1.55,
+              mb: 1.5,
               display: '-webkit-box',
               WebkitBoxOrient: 'vertical',
               WebkitLineClamp: 2,
@@ -92,7 +148,25 @@ export function ArticleListItem({ article, showExcerpt = true }: Props) {
         />
       </Box>
 
-      <ChevronRightIcon aria-hidden sx={{ color: 'text.secondary', justifySelf: 'end' }} />
+      <Box
+        className="item-arrow-box"
+        sx={{
+          display: { xs: 'none', sm: 'flex' },
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 36,
+          height: 36,
+          borderRadius: '50%',
+          border: `1px solid ${surfaceBorder}`,
+          bgcolor: colors.paper,
+          color: colors.ink,
+          justifySelf: 'end',
+          transition: 'all 200ms ease',
+          flexShrink: 0,
+        }}
+      >
+        <ChevronRightIcon aria-hidden fontSize="small" />
+      </Box>
     </Box>
   )
 }
