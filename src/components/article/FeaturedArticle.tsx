@@ -70,7 +70,7 @@ export function FeaturedArticle({ article, headingLevel = 'h2', priority = true 
           <Chip
             label="À la une"
             size="small"
-            sx={{ backgroundColor: colors.sandPale, color: colors.ink, fontWeight: 600 }}
+            sx={{ backgroundColor: colors.bluePale, color: colors.blueMid, fontWeight: 600 }}
           />
           {category ? (
             <CategoryLabel

@@ -106,7 +106,6 @@ export default async function ProviderPage({ params }: Props) {
                 <CategoryLabel
                   name={category}
                   href={providerCategoryPath(provider.category)}
-                  tone="sand"
                 />
               </Box>
 

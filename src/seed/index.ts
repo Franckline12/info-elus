@@ -1,10 +1,12 @@
 import { getPayload } from 'payload'
 
 import config from '../payload.config'
+import { seedDrafts } from './drafts'
 import { seedGuides } from './guides'
 import { seedNews } from './news'
 import { seedProviders } from './providers'
 import { seedQuizzes } from './quizzes'
+import { seedTestimonials } from './testimonials'
 
 /**
  * Jeu de données de démonstration, exécuté par `npm run seed`.
@@ -26,6 +28,14 @@ const seed = async () => {
 
   payload.logger.info('Seed : prestataires')
   await seedProviders(payload)
+
+  payload.logger.info('Seed : témoignages')
+  await seedTestimonials(payload)
+
+  // En dernier : les brouillons réutilisent les taxonomies et les visuels que
+  // les sections précédentes ont déjà mis en place.
+  payload.logger.info('Seed : brouillons')
+  await seedDrafts(payload)
 
   payload.logger.info('Seed terminé.')
   process.exit(0)

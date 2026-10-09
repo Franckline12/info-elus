@@ -20,7 +20,7 @@ export function TestimonialCard({ testimonial }: Props) {
       >
         <FormatQuoteIcon
           aria-hidden
-          sx={{ color: colors.accentQuiz, fontSize: '1.75rem', mb: 1 }}
+          sx={{ color: colors.blueBright, fontSize: '1.75rem', mb: 1 }}
         />
 
         <Typography
