@@ -19,12 +19,11 @@ type Props = {
  * Gabarit des deux pages transactionnelles de la lettre (confirmation et
  * désinscription) : un seul message, centré, sans distraction.
  *
- * Le ton n'est porté que par la couleur de l'icône et du filet : l'ocre reste
- * un signal, jamais un aplat, et aucune de ces pages n'a d'ombre (§ 5.3).
+ * Le ton n'est porté que par la couleur de l'icône et du filet, dans la seule
+ * gamme bleue, et aucune de ces pages n'a d'ombre (§ 5.3).
  */
 export function NewsletterStatus({ title, icon, tone = 'neutral', children }: Props) {
-  const accent =
-    tone === 'success' ? colors.blueBright : tone === 'warning' ? colors.accentQuiz : colors.blueMid
+  const accent = tone === 'success' ? colors.blueBright : colors.blueMid
 
   return (
     <Container sx={{ py: { xs: 5, md: 8 } }}>

@@ -41,9 +41,11 @@ Variables CSS : --color-paper #F3F0E6, --color-paper-raised #FBFAF4, --color-ink
 Polices : Space Grotesk (titres + texte, en attendant Roc Grotesk), Source Serif 4 (chapôs, citations).
 Style éditorial type journal : masthead, filets fins. Jamais d'ombre ni d'élévation ;
 rayon unique de 4 px sur les surfaces (jeton `radius`), angles droits sur les filets.
-L'ocre reste la couleur dominante de Jeux & Quiz ; d'après la maquette, il sert aussi
-aux appels à l'action (bouton Newsletter, « Lire l'article », « S'inscrire »), aux
-badges « sable » de l'en-tête d'un contenu et aux encadrés de citation.
+L'ocre (et sa teinte diluée `sandPale`) est **strictement réservé à la rubrique Jeux & Quiz** :
+bandeau `PageHero tone="quiz"`, vignettes, compteur et parcours de quiz. Partout ailleurs —
+appels à l'action (Newsletter, « Lire l'article », « S'inscrire »), badges de rubrique,
+encadrés de citation, accents de focus — l'accent est bleu (`blueBright`, `bluePale`).
+Sur fond bleu profond, les boutons passent en `color="bluePale"` ; sur papier, en `color="primary"`.
 Breakpoints : 900px (tablette, menu en accordéon) et 600px (mobile).
 
 ## Environnement

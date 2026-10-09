@@ -62,8 +62,8 @@ export function SectionShortcuts() {
                   width: 34,
                   height: 34,
                   borderRadius: '4px',
-                  backgroundColor: item.icon === 'quiz' ? colors.sandPale : colors.bluePale,
-                  color: item.icon === 'quiz' ? colors.accentQuiz : colors.blueMid,
+                  backgroundColor: colors.bluePale,
+                  color: colors.blueMid,
                 }}
               >
                 <SectionGlyph name={item.icon} fontSize="small" />
