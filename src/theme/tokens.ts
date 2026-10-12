@@ -15,12 +15,12 @@ export const colors = {
   blueBright: '#3E63E0',
   bluePale: '#E4E9FB',
   /**
-   * Unique accent hors-bleu. La maquette l'étend aux appels à l'action
-   * « Newsletter » / « Lire l'article » et aux encadrés de citation, en plus de
-   * la section Jeux & Quiz dont il reste la couleur dominante.
+   * Unique accent hors-bleu, strictement réservé à la rubrique Jeux & Quiz
+   * (§ 5.3) : bandeau de rubrique, vignettes, parcours de quiz. Partout
+   * ailleurs — appels à l'action, badges, citations — l'accent est bleu.
    */
   accentQuiz: '#E3A23E',
-  /** Teinte très diluée de l'ocre : fond des citations et des badges sable. */
+  /** Teinte très diluée de l'ocre : fonds des surfaces de Jeux & Quiz. */
   sandPale: '#FAF2E2',
 } as const
 

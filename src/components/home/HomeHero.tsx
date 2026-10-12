@@ -97,7 +97,7 @@ export function HomeHero({ article }: Props) {
         <Button
           component={AppLink}
           href={href}
-          color="accentQuiz"
+          color="bluePale"
           variant="contained"
           endIcon={<ArrowForwardIcon />}
           underline="none"

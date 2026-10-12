@@ -113,7 +113,6 @@ export function ArticleDetail({ article, related }: Props) {
                   <CategoryLabel
                     name={category.name}
                     href={category.slug ? categoryPath(category.slug) : undefined}
-                    tone="sand"
                   />
                 </Box>
               ) : null}

@@ -131,7 +131,7 @@ export function SiteNav({ items, children }: Props) {
           <Button
             component={AppLink}
             href="/#newsletter"
-            color="accentQuiz"
+            color="primary"
             variant="contained"
             size="small"
             underline="none"
@@ -198,7 +198,7 @@ export function SiteNav({ items, children }: Props) {
                       <SectionGlyph
                         name={item.icon}
                         fontSize="small"
-                        sx={{ color: item.icon === 'quiz' ? 'accentQuiz.dark' : 'primary.main' }}
+                        sx={{ color: 'primary.main' }}
                       />
                     ) : null}
                     {item.label}

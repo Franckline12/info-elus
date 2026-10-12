@@ -1,14 +1,18 @@
 import type { ServerProps } from 'payload'
 
-import { providerCategoryOptions } from '@/lib/providerCategories'
-
 /**
  * Raccourcis de filtrage au-dessus de la liste des prestataires : l'équipe
  * éditoriale passe d'une catégorie à l'autre en un clic, sans ouvrir le
  * constructeur de filtres de Payload.
  *
- * Composant serveur : ce sont de simples liens, l'état actif est lu dans
- * l'URL. `?page=1` seul remet la liste à plat en effaçant le filtre.
+ * Composant serveur : les catégories sont lues dans la taxonomie à chaque
+ * affichage — une catégorie ajoutée dans l'admin apparaît donc ici aussitôt —
+ * et ce sont de simples liens, l'état actif étant lu dans l'URL. `?page=1` seul
+ * remet la liste à plat en effaçant le filtre.
+ *
+ * Le filtre porte sur l'identifiant et non sur le slug : c'est la forme que le
+ * constructeur de filtres de Payload produit lui-même pour une relation, donc
+ * celle que la liste sait relire.
  */
 
 const WHERE_KEY = 'where[category][equals]'
@@ -23,7 +27,19 @@ const link = (active: boolean): React.CSSProperties => ({
   textDecoration: 'none',
 })
 
-export const ProviderCategoryFilter = ({ searchParams }: ServerProps) => {
+export const ProviderCategoryFilter = async ({ payload, searchParams }: ServerProps) => {
+  const { docs: categories } = await payload.find({
+    collection: 'provider-categories',
+    sort: 'name',
+    depth: 0,
+    limit: 100,
+    pagination: false,
+  })
+
+  // Tant qu'aucune catégorie n'est saisie, le bandeau n'aurait qu'un seul lien
+  // sans effet : autant ne rien afficher.
+  if (categories.length === 0) return null
+
   const current = searchParams?.[WHERE_KEY]
   const active = typeof current === 'string' ? current : undefined
 
@@ -42,16 +58,20 @@ export const ProviderCategoryFilter = ({ searchParams }: ServerProps) => {
         Toutes les catégories
       </a>
 
-      {providerCategoryOptions.map((option) => (
-        <a
-          key={option.value}
-          href={`?page=1&${WHERE_KEY}=${option.value}`}
-          style={link(active === option.value)}
-          aria-current={active === option.value ? 'true' : undefined}
-        >
-          {option.label}
-        </a>
-      ))}
+      {categories.map((category) => {
+        const value = String(category.id)
+
+        return (
+          <a
+            key={category.id}
+            href={`?page=1&${WHERE_KEY}=${value}`}
+            style={link(active === value)}
+            aria-current={active === value ? 'true' : undefined}
+          >
+            {category.name}
+          </a>
+        )
+      })}
     </nav>
   )
 }

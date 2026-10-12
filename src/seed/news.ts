@@ -1,8 +1,7 @@
-import path from 'path'
 import type { Payload } from 'payload'
 
-import type { Media } from '../payload-types'
 import { callout, heading, list, p, quote, richText, type RichTextContent } from './lexical'
+import { ensureImages, type SeedImage } from './media'
 import { ensureCategories, ensureTags } from './taxonomies'
 
 /**
@@ -37,7 +36,7 @@ type SeedNews = {
  * photographies versionnées, donc les seules dont le seed dispose sur une base
  * neuve. À remplacer par de vraies images éditoriales.
  */
-const IMAGES: Record<string, { source: string; alt: string }> = {
+const IMAGES: Record<string, SeedImage> = {
   comptabilite: {
     source: 'public/images/articles.jpeg',
     alt: 'Documents de comptabilité du CSE, calculatrice et lunettes posés sur un bureau',
@@ -265,42 +264,10 @@ const NEWS: SeedNews[] = [
   },
 ]
 
-/** Téléverse les visuels de démonstration, ou réutilise ceux déjà en base. */
-const ensureImages = async (payload: Payload): Promise<Map<string, number>> => {
-  const map = new Map<string, number>()
-
-  for (const [key, image] of Object.entries(IMAGES)) {
-    const filename = path.basename(image.source)
-
-    const { docs } = await payload.find({
-      collection: 'media',
-      where: { filename: { equals: filename } },
-      limit: 1,
-      depth: 0,
-    })
-
-    const existing = docs[0] as Media | undefined
-    if (existing) {
-      map.set(key, existing.id)
-      continue
-    }
-
-    const created = await payload.create({
-      collection: 'media',
-      data: { alt: image.alt },
-      filePath: path.join(process.cwd(), image.source),
-    })
-    payload.logger.info(`Visuel téléversé : ${filename}`)
-    map.set(key, created.id)
-  }
-
-  return map
-}
-
 export async function seedNews(payload: Payload): Promise<void> {
   const categories = await ensureCategories(payload)
   const tags = await ensureTags(payload)
-  const images = await ensureImages(payload)
+  const images = await ensureImages(payload, IMAGES)
 
   // Rejouable : on repart d'une ardoise propre pour ces slugs uniquement.
   const slugs = NEWS.map((item) => item.slug)

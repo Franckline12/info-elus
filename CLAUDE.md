@@ -41,12 +41,24 @@ Variables CSS : --color-paper #F3F0E6, --color-paper-raised #FBFAF4, --color-ink
 Polices : Space Grotesk (titres + texte, en attendant Roc Grotesk), Source Serif 4 (chapôs, citations).
 Style éditorial type journal : masthead, filets fins. Jamais d'ombre ni d'élévation ;
 rayon unique de 4 px sur les surfaces (jeton `radius`), angles droits sur les filets.
-L'ocre reste la couleur dominante de Jeux & Quiz ; d'après la maquette, il sert aussi
-aux appels à l'action (bouton Newsletter, « Lire l'article », « S'inscrire »), aux
-badges « sable » de l'en-tête d'un contenu et aux encadrés de citation.
+L'ocre (et sa teinte diluée `sandPale`) est **strictement réservé à la rubrique Jeux & Quiz** :
+bandeau `PageHero tone="quiz"`, vignettes, compteur et parcours de quiz. Partout ailleurs —
+appels à l'action (Newsletter, « Lire l'article », « S'inscrire »), badges de rubrique,
+encadrés de citation, accents de focus — l'accent est bleu (`blueBright`, `bluePale`).
+Sur fond bleu profond, les boutons passent en `color="bluePale"` ; sur papier, en `color="primary"`.
 Breakpoints : 900px (tablette, menu en accordéon) et 600px (mobile).
 
 ## Environnement
 
 - Linux, projet sur une partition NTFS montée : si une install npm semble incomplète,
   le signaler plutôt que contourner
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

@@ -29,7 +29,7 @@ export const taxonomyOptions = (
       : [],
   )
 
-/** Même conversion pour une liste de valeurs fixes (catégories de prestataires). */
+/** Même conversion pour une liste de valeurs fixes (zones d’intervention). */
 export const valueOptions = (
   items: readonly { value: string; label: string }[],
   counts?: FacetCounts,

@@ -6,8 +6,7 @@ import {
   interventionAreaOptions,
   matchingAreas,
 } from '@/lib/interventionAreas'
-import { providerCategoryOptions } from '@/lib/providerCategories'
-import type { Provider } from '@/payload-types'
+import type { Provider, ProviderCategory } from '@/payload-types'
 
 import { getPayloadClient } from './payload'
 
@@ -27,7 +26,7 @@ const PUBLISHED: Where = { published: { equals: true } }
  * interviennent, les masquer viderait l'annuaire sans raison.
  */
 const filters = ({ categorySlug, area }: { categorySlug?: string; area?: string }): Where[] => [
-  ...(categorySlug ? [{ category: { equals: categorySlug } } satisfies Where] : []),
+  ...(categorySlug ? [{ 'category.slug': { equals: categorySlug } } satisfies Where] : []),
   ...(area ? [{ interventionAreas: { in: matchingAreas(area) } } satisfies Where] : []),
 ]
 
@@ -71,31 +70,59 @@ export async function getProviderBySlug(slug: string): Promise<Provider | null> 
 }
 
 /**
+ * Catégories de l'annuaire, par ordre alphabétique. Taxonomie publique, tenue
+ * dans l'admin : la liste suit ce que l'équipe éditoriale y a saisi.
+ *
+ * Les catégories sans slug sont écartées : elles ne sont pas filtrables par
+ * URL, et une option sans adresse ne mènerait nulle part.
+ */
+export async function getProviderCategories(): Promise<ProviderCategory[]> {
+  const payload = await getPayloadClient()
+
+  const { docs } = await payload.find({
+    collection: 'provider-categories',
+    sort: 'name',
+    depth: 0,
+    limit: 100,
+    pagination: false,
+  })
+
+  return docs.filter((doc) => Boolean(doc.slug))
+}
+
+/**
  * Catégories du filtre, avec leur nombre de fiches visibles. Les catégories
  * vides sont écartées : proposer un filtre qui ne renvoie rien n'aide personne.
  *
  * Le décompte tient compte de la zone active, mais jamais de la catégorie
  * active : chaque option annonce ce qu'elle donnerait si on la choisissait.
+ *
+ * `categories` évite de relire la taxonomie quand l'appelant la connaît déjà —
+ * la page de l'annuaire s'en sert pour valider le paramètre d'URL.
  */
 export async function getCategoriesWithCount({
   area,
-}: { area?: string } = {}): Promise<FilterOption[]> {
+  categories,
+}: { area?: string; categories?: ProviderCategory[] } = {}): Promise<FilterOption[]> {
   const payload = await getPayloadClient()
 
+  const list = categories ?? (await getProviderCategories())
   const base = [PUBLISHED, ...filters({ area })]
 
+  // Décompte par identifiant plutôt que par slug : la jointure de `filters`
+  // n'a pas lieu d'être ici, la catégorie est déjà résolue.
   const counts = await Promise.all(
-    providerCategoryOptions.map((option) =>
+    list.map((category) =>
       payload.count({
         collection: 'providers',
-        where: { and: [...base, { category: { equals: option.value } }] },
+        where: { and: [...base, { category: { equals: category.id } }] },
       }),
     ),
   )
 
-  return providerCategoryOptions.flatMap((option, index) =>
-    counts[index].totalDocs > 0
-      ? [{ value: option.value, label: option.label, count: counts[index].totalDocs }]
+  return list.flatMap((category, index) =>
+    counts[index].totalDocs > 0 && category.slug
+      ? [{ value: category.slug, label: category.name, count: counts[index].totalDocs }]
       : [],
   )
 }

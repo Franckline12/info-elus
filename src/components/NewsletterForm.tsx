@@ -141,7 +141,7 @@ export function NewsletterForm({ variant = 'block', source }: Props) {
         // (hauteur nulle) : c'est ce qui garantit que la première annonce est
         // bien restituée.
         mt: message ? 1.5 : 0,
-        color: invalid ? colors.accentQuiz : colors.bluePale,
+        color: invalid ? colors.paper : colors.bluePale,
         fontSize: compact ? '0.8125rem' : '0.875rem',
         lineHeight: 1.5,
       }}
@@ -242,7 +242,7 @@ export function NewsletterForm({ variant = 'block', source }: Props) {
             sx={{
               '& .MuiInputBase-root': { backgroundColor: '#FFFFFF' },
               '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: invalid ? colors.accentQuiz : colors.bluePale,
+                borderColor: invalid ? colors.paper : colors.bluePale,
               },
             }}
           />
@@ -281,7 +281,7 @@ export function NewsletterForm({ variant = 'block', source }: Props) {
 
         <Button
           type="submit"
-          color="accentQuiz"
+          color="bluePale"
           variant="contained"
           disabled={submitting}
           fullWidth={compact}

@@ -123,15 +123,7 @@ export function FeaturedArticle({ article, headingLevel = 'h2', priority = true 
           <Chip
             label="À LA UNE"
             size="small"
-            sx={{
-              backgroundColor: colors.accentQuiz,
-              color: colors.ink,
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              letterSpacing: '0.08em',
-              borderRadius: '4px',
-              px: 0.5,
-            }}
+            sx={{ backgroundColor: colors.bluePale, color: colors.blueMid, fontWeight: 600 }}
           />
           {category ? (
             <CategoryLabel
@@ -153,7 +145,11 @@ export function FeaturedArticle({ article, headingLevel = 'h2', priority = true 
             color: colors.ink,
           }}
         >
-          <AppLink href={href} underline="none" sx={{ color: 'inherit', '&:hover': { color: colors.blueBright } }}>
+          <AppLink
+            href={href}
+            underline="none"
+            sx={{ color: 'inherit', '&:hover': { color: colors.blueBright } }}
+          >
             {article.title}
           </AppLink>
         </Typography>
