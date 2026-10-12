@@ -25,6 +25,21 @@ export const CATEGORIES: SeedTaxonomy[] = [
   { slug: 'elections', name: 'Élections' },
 ]
 
+/**
+ * Catégories de l'annuaire des prestataires (§ 2.4). Taxonomie distincte de
+ * `CATEGORIES` : on classe ici un métier, pas un sujet.
+ */
+export const PROVIDER_CATEGORIES: SeedTaxonomy[] = [
+  { slug: 'formation', name: 'Formation' },
+  { slug: 'assistance-juridique', name: 'Assistance juridique' },
+  { slug: 'comptabilite-audit', name: 'Comptabilité & audit' },
+  { slug: 'billetterie-asc', name: 'Billetterie & ASC' },
+  { slug: 'evenementiel', name: 'Événementiel' },
+  { slug: 'assurance-prevoyance', name: 'Assurance & prévoyance' },
+  { slug: 'communication-edition', name: 'Communication & édition' },
+  { slug: 'outils-de-gestion', name: 'Outils de gestion' },
+]
+
 /** Tags transverses aux articles, à l'actualité et aux guides (§ 2.3, § 4.2). */
 export const TAGS: SeedTaxonomy[] = [
   { slug: 'mandat', name: 'Mandat' },
@@ -101,6 +116,38 @@ export const ensureCategories = async (
       data: { name: category.name, slug: category.slug },
     })
     payload.logger.info(`Catégorie créée : ${category.name}`)
+    map.set(category.slug, created.id)
+  }
+
+  return map
+}
+
+/** Même contrat que `ensureCategories`, pour les catégories de prestataires. */
+export const ensureProviderCategories = async (
+  payload: Payload,
+  categories: SeedTaxonomy[] = PROVIDER_CATEGORIES,
+): Promise<Map<string, number>> => {
+  const map = new Map<string, number>()
+
+  for (const category of categories) {
+    const { docs } = await payload.find({
+      collection: 'provider-categories',
+      where: { slug: { equals: category.slug } },
+      limit: 1,
+      depth: 0,
+    })
+
+    const existing = docs[0]
+    if (existing) {
+      map.set(category.slug, existing.id)
+      continue
+    }
+
+    const created = await payload.create({
+      collection: 'provider-categories',
+      data: { name: category.name, slug: category.slug },
+    })
+    payload.logger.info(`Catégorie de prestataire créée : ${category.name}`)
     map.set(category.slug, created.id)
   }
 

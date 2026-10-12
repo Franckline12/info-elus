@@ -2,10 +2,11 @@ import type { Payload } from 'payload'
 
 import type { Provider } from '../payload-types'
 import { heading, list, p, quote, richText, type RichTextContent } from './lexical'
+import { ensureProviderCategories } from './taxonomies'
 
 /**
- * Annuaire de démonstration (§ 2.4) : dix prestataires fictifs répartis sur les
- * cinq catégories, avec des zones d'intervention variées.
+ * Annuaire de démonstration (§ 2.4) : seize prestataires fictifs répartis sur
+ * les huit catégories, avec des zones d'intervention variées.
  *
  * Deux fiches restent décochées pour donner à voir la modération : elles
  * apparaissent dans l'admin, jamais sur le site public.
@@ -17,7 +18,7 @@ import { heading, list, p, quote, richText, type RichTextContent } from './lexic
 type SeedProvider = {
   slug: string
   name: string
-  category: Provider['category']
+  categorySlug: string
   shortDescription: string
   interventionAreas: NonNullable<Provider['interventionAreas']>
   contact: NonNullable<Provider['contact']>
@@ -29,7 +30,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'atelier-mandat',
     name: 'Atelier Mandat',
-    category: 'training',
+    categorySlug: 'formation',
     shortDescription:
       'Formations économiques et SSCT pour les élus nouvellement mandatés, en présentiel ou à distance.',
     interventionAreas: ['france'],
@@ -62,7 +63,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'cap-formation-elus',
     name: 'Cap Formation Élus',
-    category: 'training',
+    categorySlug: 'formation',
     shortDescription:
       'Organisme de formation dédié aux CSE de moins de cinquante salariés, avec des sessions en petit groupe.',
     interventionAreas: ['ile-de-france', 'hauts-de-france', 'grand-est'],
@@ -87,7 +88,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'cabinet-vergne-loiseau',
     name: 'Cabinet Vergne & Loiseau',
-    category: 'legal',
+    categorySlug: 'assistance-juridique',
     shortDescription:
       'Avocats en droit du travail, aux côtés des élus sur les consultations, les expertises et le contentieux.',
     interventionAreas: ['france'],
@@ -116,7 +117,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'juris-cse-conseil',
     name: 'Juris CSE Conseil',
-    category: 'legal',
+    categorySlug: 'assistance-juridique',
     shortDescription:
       'Permanence juridique par téléphone et par email, avec une réponse écrite sous quarante-huit heures.',
     interventionAreas: ['occitanie', 'nouvelle-aquitaine'],
@@ -136,7 +137,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'chiffre-et-mandat',
     name: 'Chiffre & Mandat',
-    category: 'accounting',
+    categorySlug: 'comptabilite-audit',
     shortDescription:
       'Tenue des comptes du CSE, établissement des comptes annuels et présentation en réunion plénière.',
     interventionAreas: ['france'],
@@ -165,7 +166,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'audit-boreal',
     name: 'Audit Boréal',
-    category: 'accounting',
+    categorySlug: 'comptabilite-audit',
     shortDescription:
       'Expertise-comptable agréée CSE : examen des comptes de l’entreprise et des orientations stratégiques.',
     interventionAreas: ['auvergne-rhone-alpes', 'bourgogne-franche-comte'],
@@ -194,7 +195,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'billetterie-farandole',
     name: 'Billetterie Farandole',
-    category: 'ticketing',
+    categorySlug: 'billetterie-asc',
     shortDescription:
       'Plateforme de billetterie et de chèques cadeaux, sans abonnement ni engagement de volume.',
     interventionAreas: ['france'],
@@ -222,7 +223,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'comptoir-des-asc',
     name: 'Comptoir des ASC',
-    category: 'ticketing',
+    categorySlug: 'billetterie-asc',
     shortDescription:
       'Catalogue d’activités sociales et culturelles construit avec des partenaires locaux du Grand Ouest.',
     interventionAreas: ['bretagne', 'pays-de-la-loire', 'normandie'],
@@ -241,7 +242,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'les-rendez-vous-du-mandat',
     name: 'Les Rendez-vous du Mandat',
-    category: 'events',
+    categorySlug: 'evenementiel',
     shortDescription:
       'Organisation d’assemblées générales, de journées d’accueil et d’arbres de Noël pour les comités.',
     interventionAreas: ['ile-de-france', 'centre-val-de-loire'],
@@ -267,7 +268,7 @@ const PROVIDERS: SeedProvider[] = [
   {
     slug: 'escale-evenements',
     name: 'Escale Événements',
-    category: 'events',
+    categorySlug: 'evenementiel',
     shortDescription:
       'Séjours collectifs et week-ends de cohésion, avec une attention portée à l’accessibilité des sites.',
     interventionAreas: ['provence-alpes-cote-d-azur', 'corse'],
@@ -286,9 +287,188 @@ const PROVIDERS: SeedProvider[] = [
     ),
     published: true,
   },
+  {
+    slug: 'garance-et-mandat',
+    name: 'Garance & Mandat',
+    categorySlug: 'assurance-prevoyance',
+    shortDescription:
+      'Courtier spécialisé dans l’assurance des comités : responsabilité civile de l’instance et couverture des sorties et séjours.',
+    interventionAreas: ['france'],
+    contact: {
+      contactName: 'Lucie Darmon',
+      email: 'comites@garance-mandat.example',
+      phone: '01 42 00 11 22',
+      website: 'https://garance-mandat.example',
+    },
+    description: richText(
+      p(
+        'Un comité qui organise une sortie engage sa responsabilité. Garance & Mandat met en place les garanties correspondantes et vérifie ce que couvre déjà le contrat de l’entreprise, pour ne pas payer deux fois la même protection.',
+      ),
+      heading('h3', 'Ce que le cabinet met en place'),
+      list([
+        'Responsabilité civile du comité en tant que personne morale',
+        'Couverture des activités, sorties et séjours ouverts aux familles',
+        'Protection juridique des élus dans l’exercice de leur mandat',
+      ]),
+      p(
+        'Un audit des contrats existants est réalisé avant toute proposition : il arrive qu’aucune souscription nouvelle ne soit nécessaire, et c’est dit tel quel.',
+      ),
+    ),
+    published: true,
+  },
+  {
+    slug: 'prevoyance-reperes',
+    name: 'Prévoyance Repères',
+    categorySlug: 'assurance-prevoyance',
+    shortDescription:
+      'Appui aux élus sur les régimes de frais de santé et de prévoyance soumis à consultation, du cahier des charges à l’avis.',
+    interventionAreas: ['ile-de-france', 'normandie', 'centre-val-de-loire'],
+    contact: {
+      email: 'elus@prevoyance-reperes.example',
+      phone: '02 31 00 00 00',
+      website: 'https://prevoyance-reperes.example',
+    },
+    description: richText(
+      p(
+        'Quand l’employeur change de complémentaire santé ou renégocie la prévoyance, le comité est consulté sur un dossier technique que peu d’élus ont les moyens de décortiquer. Prévoyance Repères traduit ce dossier.',
+      ),
+      heading('h3', 'Déroulé de la mission'),
+      list(
+        [
+          'Lecture du contrat en cours et du projet présenté',
+          'Comparaison des garanties, des exclusions et des délais de carence',
+          'Note écrite reprenant les points à soulever en réunion',
+          'Participation à la séance de consultation si les élus le souhaitent',
+        ],
+        true,
+      ),
+      quote('Un tableau de garanties se lit d’abord par ce qu’il ne couvre pas.'),
+    ),
+    published: true,
+  },
+  {
+    slug: 'encre-collective',
+    name: 'Encre Collective',
+    categorySlug: 'communication-edition',
+    shortDescription:
+      'Journal du comité, affiches et tracts d’information aux salariés : rédaction, maquette et impression au format souhaité.',
+    interventionAreas: ['france'],
+    contact: {
+      contactName: 'Yann Mercier',
+      email: 'bonjour@encre-collective.example',
+      phone: '04 78 00 00 00',
+      website: 'https://encre-collective.example',
+    },
+    description: richText(
+      p(
+        'Les comités écrivent beaucoup et sont peu lus. Encre Collective part des textes des élus et les met en forme pour qu’ils soient effectivement parcourus : titres courts, hiérarchie claire, format adapté au lieu d’affichage.',
+      ),
+      heading('h3', 'Supports produits'),
+      list([
+        'Journal du comité, de quatre à douze pages, deux à quatre fois par an',
+        'Affiches de réunion et comptes rendus synthétiques pour les panneaux',
+        'Tracts d’information lors d’une consultation ou d’une négociation en cours',
+      ]),
+      heading('h3', 'Méthode'),
+      p(
+        'Les élus restent auteurs : l’atelier réécrit, resserre et propose des titres, mais ne signe rien à leur place et ne prend pas position dans le contenu.',
+      ),
+    ),
+    published: true,
+  },
+  {
+    slug: 'relais-salaries',
+    name: 'Relais Salariés',
+    categorySlug: 'communication-edition',
+    shortDescription:
+      'Site d’information et lettre interne du CSE, administrés ensuite par les élus eux-mêmes, sans compétence technique requise.',
+    interventionAreas: ['hauts-de-france', 'grand-est', 'bourgogne-franche-comte'],
+    contact: {
+      email: 'contact@relais-salaries.example',
+      phone: '03 27 00 00 00',
+      website: 'https://relais-salaries.example',
+    },
+    description: richText(
+      p(
+        'Un espace en ligne où les salariés retrouvent les comptes rendus, le calendrier des activités et les démarches du comité, mis à jour par les élus depuis une interface volontairement réduite.',
+      ),
+      heading('h3', 'Ce qui est livré'),
+      list([
+        'Site d’information aux couleurs du comité, accessible depuis un téléphone',
+        'Lettre d’information envoyée aux salariés qui s’y abonnent',
+        'Deux séances de prise en main pour l’équipe, puis une assistance par email',
+      ]),
+      p(
+        'L’hébergement est en France et aucune donnée de navigation n’est revendue : le comité reste propriétaire de son fichier d’abonnés.',
+      ),
+    ),
+    published: true,
+  },
+  {
+    slug: 'registre-cse',
+    name: 'Registre CSE',
+    categorySlug: 'outils-de-gestion',
+    shortDescription:
+      'Logiciel de gestion du comité : budgets séparés, suivi des activités sociales, inscriptions et attestations aux salariés.',
+    interventionAreas: ['france'],
+    contact: {
+      contactName: 'Amandine Royer',
+      email: 'equipe@registre-cse.example',
+      phone: '05 35 00 00 00',
+      website: 'https://registre-cse.example',
+    },
+    description: richText(
+      p(
+        'Un outil unique pour les deux budgets du comité, construit autour de la séparation stricte entre fonctionnement et activités sociales — celle que l’expert-comptable vérifiera.',
+      ),
+      heading('h3', 'Fonctions principales'),
+      list([
+        'Saisie des dépenses rattachées d’office à l’un des deux budgets',
+        'Suivi des participations par salarié et par activité, avec plafonds d’exonération',
+        'Inscriptions en ligne aux sorties, avec liste d’attente et relances',
+        'Exports comptables et attestations de participation en fin d’exercice',
+      ]),
+      heading('h3', 'Mise en place'),
+      p(
+        'La reprise des données de l’exercice en cours est incluse, à partir d’un tableur ou d’un export de l’outil précédent. Aucun engagement de durée.',
+      ),
+    ),
+    published: true,
+  },
+  {
+    slug: 'tresor-de-comite',
+    name: 'Trésor de Comité',
+    categorySlug: 'outils-de-gestion',
+    shortDescription:
+      'Tableau de bord budgétaire pour les trésoriers non comptables : où en sont les deux budgets, et ce qu’il reste à engager.',
+    interventionAreas: ['occitanie', 'provence-alpes-cote-d-azur', 'nouvelle-aquitaine'],
+    contact: {
+      email: 'tresoriers@tresor-de-comite.example',
+      website: 'https://tresor-de-comite.example',
+    },
+    description: richText(
+      p(
+        'La trésorerie d’un comité échoit souvent à un élu qui n’est pas comptable et qui découvre la fonction en cours de mandat. L’outil répond à une seule question, à tout moment : combien reste-t-il, sur quel budget, et pour quoi ?',
+      ),
+      heading('h3', 'Parti pris'),
+      list([
+        'Un écran unique plutôt qu’un menu à dix entrées',
+        'Les engagements pris mais non encore payés apparaissent, pour éviter les doubles promesses',
+        'Un point d’alerte quand le budget de fonctionnement sert à financer une activité sociale',
+      ]),
+      quote(
+        'Un trésorier bien outillé n’est pas celui qui tient mieux ses comptes, c’est celui qui peut répondre en séance.',
+      ),
+      p(
+        'Une version de démonstration, chargée avec des montants fictifs, permet de tester l’outil avant toute décision du comité.',
+      ),
+    ),
+    published: true,
+  },
 ]
 
 export async function seedProviders(payload: Payload): Promise<void> {
+  const categories = await ensureProviderCategories(payload)
   const slugs = PROVIDERS.map((provider) => provider.slug)
 
   const { docs: existing } = await payload.find({
@@ -308,6 +488,9 @@ export async function seedProviders(payload: Payload): Promise<void> {
   }
 
   for (const provider of PROVIDERS) {
+    const categoryId = categories.get(provider.categorySlug)
+    if (!categoryId) throw new Error(`Catégorie introuvable pour « ${provider.name} »`)
+
     await payload.create({
       collection: 'providers',
       context: { disableRevalidate: true },
@@ -316,7 +499,7 @@ export async function seedProviders(payload: Payload): Promise<void> {
         slug: provider.slug,
         shortDescription: provider.shortDescription,
         description: provider.description,
-        category: provider.category,
+        category: categoryId,
         interventionAreas: provider.interventionAreas,
         contact: provider.contact,
         published: provider.published ?? false,

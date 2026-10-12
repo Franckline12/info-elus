@@ -3,7 +3,13 @@ import type { Payload } from 'payload'
 import type { Provider, Quiz } from '../payload-types'
 import { callout, heading, list, p, quote, richText, type RichTextContent } from './lexical'
 import { ensureImages, type SeedImage } from './media'
-import { ensureCategories, ensureTags, ensureThemes, type SeedTheme } from './taxonomies'
+import {
+  ensureCategories,
+  ensureProviderCategories,
+  ensureTags,
+  ensureThemes,
+  type SeedTheme,
+} from './taxonomies'
 
 /**
  * Contenus en attente de publication, pour donner à voir le circuit éditorial
@@ -571,7 +577,7 @@ const QUIZZES: SeedDraftQuiz[] = [
 type SeedDraftProvider = {
   slug: string
   name: string
-  category: Provider['category']
+  categorySlug: string
   shortDescription: string
   interventionAreas: NonNullable<Provider['interventionAreas']>
   contact: NonNullable<Provider['contact']>
@@ -587,7 +593,7 @@ const PROVIDERS: SeedDraftProvider[] = [
   {
     slug: 'reperes-et-mandat',
     name: 'Repères & Mandat',
-    category: 'training',
+    categorySlug: 'formation',
     shortDescription:
       'Formations courtes au fonctionnement du CSE, construites autour des documents réels du comité : budget, ordre du jour, procès-verbal.',
     interventionAreas: ['grand-est', 'bourgogne-franche-comte'],
@@ -615,7 +621,7 @@ const PROVIDERS: SeedDraftProvider[] = [
   {
     slug: 'odyssee-collective',
     name: 'Odyssée Collective',
-    category: 'events',
+    categorySlug: 'evenementiel',
     shortDescription:
       'Organisation de sorties et de séjours pour les comités, avec une grille tarifaire transparente et un accompagnement sur la billetterie des familles.',
     interventionAreas: ['nouvelle-aquitaine', 'occitanie'],
@@ -670,8 +676,9 @@ const replaceBySlug = async (
 }
 
 export async function seedDrafts(payload: Payload): Promise<void> {
-  const [categories, tags, themes, images] = [
+  const [categories, providerCategories, tags, themes, images] = [
     await ensureCategories(payload),
+    await ensureProviderCategories(payload),
     await ensureTags(payload),
     await ensureThemes(payload, THEMES),
     await ensureImages(payload, IMAGES),
@@ -784,6 +791,9 @@ export async function seedDrafts(payload: Payload): Promise<void> {
   )
 
   for (const provider of PROVIDERS) {
+    const categoryId = providerCategories.get(provider.categorySlug)
+    if (!categoryId) throw new Error(`Catégorie introuvable pour le brouillon « ${provider.name} »`)
+
     await payload.create({
       collection: 'providers',
       context: { disableRevalidate: true },
@@ -792,7 +802,7 @@ export async function seedDrafts(payload: Payload): Promise<void> {
         slug: provider.slug,
         shortDescription: provider.shortDescription,
         description: provider.description,
-        category: provider.category,
+        category: categoryId,
         interventionAreas: provider.interventionAreas,
         contact: provider.contact,
         // Équivalent du brouillon ici : la fiche attend sa relecture.
