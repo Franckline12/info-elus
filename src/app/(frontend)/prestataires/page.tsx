@@ -10,22 +10,27 @@ import PageHero from '@/components/PageHero'
 import PaginationLinks from '@/components/PaginationLinks'
 import ProviderRow from '@/components/provider/ProviderRow'
 import { interventionAreaLabel, interventionAreaValue } from '@/lib/interventionAreas'
-import { providerCategoryLabel, providerCategoryValue } from '@/lib/providerCategories'
-import { getAreasWithCount, getCategoriesWithCount, getProviders } from '@/lib/queries/providers'
+import {
+  getAreasWithCount,
+  getCategoriesWithCount,
+  getProviderCategories,
+  getProviders,
+} from '@/lib/queries/providers'
 import { parsePage, providersPagePath, providersPath } from '@/lib/routes'
 import { rule } from '@/theme/tokens'
 
 const PER_PAGE = 10
 
 const INTRO =
-  'Formation, conseil juridique, comptabilité, billetterie, événementiel : les élus de CSE ' +
-  'ont régulièrement besoin d’un appui extérieur. Cet annuaire rassemble des prestataires ' +
-  'qui travaillent avec les comités, classés par métier et par zone d’intervention.'
+  'Formation, conseil juridique, comptabilité, billetterie, assurance, communication : les ' +
+  'élus de CSE ont régulièrement besoin d’un appui extérieur, sur des sujets très divers. ' +
+  'Cet annuaire rassemble des prestataires qui travaillent avec les comités, classés par ' +
+  'métier et par zone d’intervention.'
 
 export const metadata: Metadata = {
   title: 'Annuaire des prestataires',
   description:
-    'Formation, assistance juridique, comptabilité, billetterie, événementiel : des prestataires qui accompagnent les élus de CSE, par métier et par région.',
+    'Formation, assistance juridique, comptabilité, billetterie, assurance, communication : des prestataires qui accompagnent les élus de CSE, par métier et par région.',
 }
 
 type Props = {
@@ -39,9 +44,16 @@ const resultLabel = (total: number): string =>
 export default async function ProvidersPage({ searchParams }: Props) {
   const params = await searchParams
 
-  // Une valeur inconnue dans l'URL est ignorée plutôt que renvoyée à la base :
-  // le filtre retombe alors sur « toutes », et non sur une liste vide.
-  const categorySlug = providerCategoryValue(params.categorie)
+  // La taxonomie est lue d'abord : elle sert à la fois de source aux filtres et
+  // de liste de référence pour le paramètre d'URL. Une valeur inconnue est
+  // ignorée plutôt que renvoyée à la base — le filtre retombe alors sur
+  // « toutes », et non sur une liste vide.
+  const taxonomy = await getProviderCategories()
+  const activeCategory = params.categorie
+    ? taxonomy.find((category) => category.slug === params.categorie)
+    : undefined
+
+  const categorySlug = activeCategory?.slug ?? undefined
   const area = interventionAreaValue(params.zone)
   const page = parsePage(params.page)
 
@@ -49,7 +61,7 @@ export default async function ProvidersPage({ searchParams }: Props) {
     getProviders({ categorySlug, area, page, limit: PER_PAGE }),
     // Chaque famille de filtres se compte sans elle-même : une option annonce
     // ce qu'elle donnerait si on la choisissait, l'autre filtre restant actif.
-    getCategoriesWithCount({ area }),
+    getCategoriesWithCount({ area, categories: taxonomy }),
     getAreasWithCount({ categorySlug }),
   ])
 
@@ -133,7 +145,7 @@ export default async function ProvidersPage({ searchParams }: Props) {
             description={
               filtered
                 ? `Aucun prestataire référencé pour ce croisement${
-                    categorySlug ? ` de la catégorie « ${providerCategoryLabel(categorySlug)} »` : ''
+                    activeCategory ? ` de la catégorie « ${activeCategory.name} »` : ''
                   }${area ? ` en ${interventionAreaLabel(area)}` : ''}.`
                 : 'Les premiers partenaires seront référencés prochainement.'
             }
