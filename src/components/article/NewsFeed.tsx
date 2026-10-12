@@ -22,13 +22,9 @@ export function NewsFeed({ articles }: Props) {
   if (articles.length === 0) return null
 
   return (
-    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, borderTop: `1px solid ${rule}` }}>
+    <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
       {articles.map((article) => (
-        <Box
-          component="li"
-          key={article.id}
-          sx={{ py: { xs: 2.5, md: 3 }, borderBottom: `1px solid ${rule}` }}
-        >
+        <Box component="li" key={article.id}>
           <ArticleListItem article={article} />
         </Box>
       ))}
