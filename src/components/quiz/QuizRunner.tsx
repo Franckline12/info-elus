@@ -31,6 +31,7 @@ import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined'
 import HighlightOffIcon from '@mui/icons-material/HighlightOff'
 
 import AppLink from '@/components/AppLink'
+import QuizEmailResultForm from '@/components/quiz/QuizEmailResultForm'
 import type { PlayableQuiz } from '@/lib/quiz/playable'
 import { quizzesPath } from '@/lib/routes'
 import { colors, radius, surfaceBorder } from '@/theme/tokens'
@@ -292,6 +293,11 @@ export function QuizRunner({ quiz, nextQuiz = null }: Props) {
               </Alert>
             ) : null}
           </Box>
+
+          <QuizEmailResultForm
+            quizId={quiz.id}
+            answers={played.map((answer) => answer.answer)}
+          />
 
           <Box
             sx={{
