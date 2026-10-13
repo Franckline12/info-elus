@@ -47,11 +47,12 @@ export async function POST(request: Request): Promise<Response> {
   // L'enregistrement est secondaire : le joueur doit voir son score même si
   // l'écriture échoue. Le parcours de jeu affiche alors un avertissement.
   let saved = false
+  let resultId: number | null = null
 
   try {
     const payload = await getPayloadClient()
 
-    await payload.create({
+    const created = await payload.create({
       collection: 'quiz-results',
       data: {
         quiz: quiz.id,
@@ -66,12 +67,14 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     saved = true
+    resultId = created.id
   } catch (error) {
     const payload = await getPayloadClient()
     payload.logger.error({ err: error }, 'Enregistrement d’un résultat de quiz impossible')
   }
 
   return Response.json({
+    resultId,
     quiz: { id: quiz.id, slug: quiz.slug, title: quiz.title },
     score: grade.score,
     total: grade.total,

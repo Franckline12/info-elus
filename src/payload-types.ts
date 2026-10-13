@@ -438,7 +438,7 @@ export interface Quiz {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.
+ * Parties enregistrées par les visiteurs et coordonnées des participants ayant demandé leurs résultats.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "quiz-results".
@@ -455,7 +455,19 @@ export interface QuizResult {
    */
   total: number;
   /**
-   * Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.
+   * Nom de famille renseigné par le participant.
+   */
+  nom?: string | null;
+  /**
+   * Prénom renseigné par le participant.
+   */
+  prenom?: string | null;
+  /**
+   * Adresse email du participant pour l’envoi des résultats.
+   */
+  email?: string | null;
+  /**
+   * Entreprise ou CSE renseigné par le participant.
    */
   cseName?: string | null;
   playedAt?: string | null;
@@ -912,6 +924,9 @@ export interface QuizResultsSelect<T extends boolean = true> {
   quiz?: T;
   score?: T;
   total?: T;
+  nom?: T;
+  prenom?: T;
+  email?: T;
   cseName?: T;
   playedAt?: T;
   updatedAt?: T;

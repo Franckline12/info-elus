@@ -71,6 +71,7 @@ export function QuizRunner({ quiz, nextQuiz = null }: Props) {
   const [played, setPlayed] = useState<PlayedAnswer[]>([])
   const [finished, setFinished] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
+  const [resultId, setResultId] = useState<number | null>(null)
 
   /**
    * Garde-fou contre le double envoi : un double clic sur « Voir mon score »
@@ -135,7 +136,15 @@ export function QuizRunner({ quiz, nextQuiz = null }: Props) {
           return
         }
 
-        setSaveState(response.ok ? 'saved' : 'error')
+        if (response.ok) {
+          const data = (await response.json()) as { resultId?: number }
+          if (typeof data.resultId === 'number') {
+            setResultId(data.resultId)
+          }
+          setSaveState('saved')
+        } else {
+          setSaveState('error')
+        }
       } catch {
         setSaveState('error')
       }
@@ -167,6 +176,7 @@ export function QuizRunner({ quiz, nextQuiz = null }: Props) {
     setPlayed([])
     setFinished(false)
     setSaveState('idle')
+    setResultId(null)
   }, [])
 
   if (questions.length === 0 || !question) {
@@ -297,6 +307,7 @@ export function QuizRunner({ quiz, nextQuiz = null }: Props) {
           <QuizEmailResultForm
             quizId={quiz.id}
             answers={played.map((answer) => answer.answer)}
+            resultId={resultId}
           />
 
           <Box
