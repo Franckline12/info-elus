@@ -103,6 +103,25 @@ export async function POST(request: Request): Promise<Response> {
 
   const quizUrl = quiz.slug ? absoluteUrl(`${quizzesPath}/${quiz.slug}`) : undefined
 
+  // Construction du récapitulatif détaillé question par question
+  const reviewQuestions = grade.answers.map((answer, index) => {
+    const question = questions[index]
+    const prompt = question?.prompt ?? `Question ${index + 1}`
+    const options = question?.options ?? []
+    const userAnswerText = options[answer.answer]?.text ?? '—'
+    const correctAnswerText = options[answer.correctIndex]?.text ?? '—'
+    const explanation = question?.explanation?.trim() || answer.explanation || null
+
+    return {
+      questionNumber: index + 1,
+      prompt,
+      isCorrect: answer.isCorrect,
+      userAnswer: userAnswerText,
+      correctAnswer: correctAnswerText,
+      explanation,
+    }
+  })
+
   const { subject, html, text } = buildQuizResultEmail({
     recipientName: fullName,
     quizTitle: quiz.title,
@@ -110,6 +129,7 @@ export async function POST(request: Request): Promise<Response> {
     total: grade.total,
     correctCount: grade.correctCount,
     questionCount: grade.questionCount,
+    questions: reviewQuestions,
     companyCse: cseName || null,
     quizUrl,
   })
