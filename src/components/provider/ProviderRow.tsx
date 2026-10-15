@@ -6,7 +6,7 @@ import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined'
 import AppLink from '@/components/AppLink'
 import CategoryLabel from '@/components/CategoryLabel'
 import { interventionAreaLabel } from '@/lib/interventionAreas'
-import { providerCategoryLabel } from '@/lib/providerCategories'
+import { providerCategory } from '@/lib/providerCategories'
 import { providerPath } from '@/lib/routes'
 import type { Provider } from '@/payload-types'
 import { colors } from '@/theme/tokens'
@@ -30,6 +30,7 @@ type Props = {
  */
 export function ProviderRow({ provider }: Props) {
   const href = providerPath(provider)
+  const category = providerCategory(provider.category)
   const areas = provider.interventionAreas ?? []
 
   return (
@@ -58,7 +59,7 @@ export function ProviderRow({ provider }: Props) {
             </AppLink>
           </Typography>
 
-          <CategoryLabel name={providerCategoryLabel(provider.category)} />
+          {category ? <CategoryLabel name={category.name} /> : null}
         </Box>
 
         <Typography variant="body2" sx={{ color: 'text.secondary', maxWidth: '62ch', m: 0 }}>

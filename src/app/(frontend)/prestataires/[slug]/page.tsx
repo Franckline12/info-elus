@@ -12,7 +12,7 @@ import ProviderContact from '@/components/provider/ProviderContact'
 import ProviderLogo from '@/components/provider/ProviderLogo'
 import RichText from '@/components/RichText'
 import { interventionAreaLabel } from '@/lib/interventionAreas'
-import { providerCategoryLabel } from '@/lib/providerCategories'
+import { providerCategory } from '@/lib/providerCategories'
 import { getProviderBySlug, getPublishedProviderSlugs } from '@/lib/queries/providers'
 import { providerCategoryPath, providerPath, providersPath } from '@/lib/routes'
 import { contentMetadata } from '@/lib/seo'
@@ -54,7 +54,10 @@ export default async function ProviderPage({ params }: Props) {
 
   if (!provider) notFound()
 
-  const category = providerCategoryLabel(provider.category)
+  // Une fiche dont la catégorie a été supprimée reste en ligne : le badge et le
+  // lien de rubrique disparaissent, le reste de la fiche est inchangé.
+  const category = providerCategory(provider.category)
+  const categoryHref = category?.slug ? providerCategoryPath(category.slug) : undefined
   const areas = provider.interventionAreas ?? []
   const logo = asMedia(provider.logo)
   const url = absoluteUrl(providerPath(provider))
@@ -73,7 +76,7 @@ export default async function ProviderPage({ params }: Props) {
     ...(areas.length > 0
       ? { areaServed: areas.map((area) => interventionAreaLabel(area)) }
       : {}),
-    knowsAbout: category,
+    ...(category ? { knowsAbout: category.name } : {}),
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
   }
 
@@ -102,13 +105,11 @@ export default async function ProviderPage({ params }: Props) {
             <ProviderLogo provider={provider} size={88} />
 
             <Box sx={{ minWidth: 0 }}>
-              <Box sx={{ mb: 1 }}>
-                <CategoryLabel
-                  name={category}
-                  href={providerCategoryPath(provider.category)}
-                  tone="sand"
-                />
-              </Box>
+              {category ? (
+                <Box sx={{ mb: 1 }}>
+                  <CategoryLabel name={category.name} href={categoryHref} />
+                </Box>
+              ) : null}
 
               <Typography
                 variant="h1"
@@ -180,8 +181,10 @@ export default async function ProviderPage({ params }: Props) {
       </Box>
 
       <Box sx={{ mt: { xs: 4, md: 5 }, pt: { xs: 2, md: 2.5 }, borderTop: `1px solid ${rule}` }}>
-        <AppLink href={providerCategoryPath(provider.category)} sx={{ fontSize: '0.9375rem' }}>
-          {`Voir les autres prestataires de la catégorie « ${category} »`}
+        <AppLink href={categoryHref ?? providersPath} sx={{ fontSize: '0.9375rem' }}>
+          {category
+            ? `Voir les autres prestataires de la catégorie « ${category.name} »`
+            : 'Voir tous les prestataires'}
         </AppLink>
       </Box>
     </Container>

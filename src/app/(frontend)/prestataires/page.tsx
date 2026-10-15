@@ -26,14 +26,15 @@ import { colors, radius, rule, surfaceBorder } from '@/theme/tokens'
 const PER_PAGE = 10
 
 const INTRO =
-  'Formation, conseil juridique, comptabilité, billetterie, événementiel : les élus de CSE ' +
-  'ont régulièrement besoin d’un appui extérieur. Cet annuaire rassemble des prestataires ' +
-  'qui travaillent avec les comités, classés par métier et par zone d’intervention.'
+  'Formation, conseil juridique, comptabilité, billetterie, assurance, communication : les ' +
+  'élus de CSE ont régulièrement besoin d’un appui extérieur, sur des sujets très divers. ' +
+  'Cet annuaire rassemble des prestataires qui travaillent avec les comités, classés par ' +
+  'métier et par zone d’intervention.'
 
 export const metadata: Metadata = {
   title: 'Annuaire des prestataires',
   description:
-    'Formation, assistance juridique, comptabilité, billetterie, événementiel : des prestataires qui accompagnent les élus de CSE, par métier et par région.',
+    'Formation, assistance juridique, comptabilité, billetterie, assurance, communication : des prestataires qui accompagnent les élus de CSE, par métier et par région.',
 }
 
 type Props = {
@@ -47,9 +48,16 @@ const resultLabel = (total: number): string =>
 export default async function ProvidersPage({ searchParams }: Props) {
   const params = await searchParams
 
-  // Une valeur inconnue dans l'URL est ignorée plutôt que renvoyée à la base :
-  // le filtre retombe alors sur « toutes », et non sur une liste vide.
-  const categorySlug = providerCategoryValue(params.categorie)
+  // La taxonomie est lue d'abord : elle sert à la fois de source aux filtres et
+  // de liste de référence pour le paramètre d'URL. Une valeur inconnue est
+  // ignorée plutôt que renvoyée à la base — le filtre retombe alors sur
+  // « toutes », et non sur une liste vide.
+  const taxonomy = await getProviderCategories()
+  const activeCategory = params.categorie
+    ? taxonomy.find((category) => category.slug === params.categorie)
+    : undefined
+
+  const categorySlug = activeCategory?.slug ?? undefined
   const area = interventionAreaValue(params.zone)
   const page = parsePage(params.page)
 
@@ -57,7 +65,7 @@ export default async function ProvidersPage({ searchParams }: Props) {
     getSubscribedProviders({ categorySlug, area }),
     // Chaque famille de filtres se compte sans elle-même : une option annonce
     // ce qu'elle donnerait si on la choisissait, l'autre filtre restant actif.
-    getCategoriesWithCount({ area }),
+    getCategoriesWithCount({ area, categories: taxonomy }),
     getAreasWithCount({ categorySlug }),
   ])
 
@@ -96,7 +104,10 @@ export default async function ProvidersPage({ searchParams }: Props) {
       <ProviderSubscriptionForm />
 
       {/* Séparateur */}
-      <Box component="hr" sx={{ border: 'none', borderTop: `1px solid ${rule}`, my: { xs: 3, md: 4 } }} />
+      <Box
+        component="hr"
+        sx={{ border: 'none', borderTop: `1px solid ${rule}`, my: { xs: 3, md: 4 } }}
+      />
 
       {/* Section Prestataires abonnés (cartes grand format) */}
       <Box component="section" aria-labelledby="prestataires-abonnes">
@@ -124,22 +135,22 @@ export default async function ProvidersPage({ searchParams }: Props) {
             }}
           >
             <Typography variant="body2" sx={{ color: 'text.secondary', m: 0 }}>
-              Aucun prestataire abonné pour le moment. Remplissez le formulaire ci-dessus pour devenir
-              le premier partenaire mis en avant dans notre annuaire !
+              Aucun prestataire abonné pour le moment. Remplissez le formulaire ci-dessus pour
+              devenir le premier partenaire mis en avant dans notre annuaire !
             </Typography>
           </Box>
         )}
       </Box>
 
       {/* Séparateur */}
-      <Box component="hr" sx={{ border: 'none', borderTop: `1px solid ${rule}`, my: { xs: 3, md: 4 } }} />
+      <Box
+        component="hr"
+        sx={{ border: 'none', borderTop: `1px solid ${rule}`, my: { xs: 3, md: 4 } }}
+      />
 
       {/* Section Prestataires référencés */}
       <Box component="section" aria-labelledby="prestataires-references" sx={{ mt: 0 }}>
-        <SectionHeading
-          id="prestataires-references"
-          title="Prestataires référencés"
-        />
+        <SectionHeading id="prestataires-references" title="Prestataires référencés" />
 
         <Box
           sx={{
@@ -201,7 +212,9 @@ export default async function ProvidersPage({ searchParams }: Props) {
               description={
                 filtered
                   ? `Aucun prestataire référencé pour ce croisement${
-                      categorySlug ? ` de la catégorie « ${providerCategoryLabel(categorySlug)} »` : ''
+                      categorySlug
+                        ? ` de la catégorie « ${providerCategoryLabel(categorySlug)} »`
+                        : ''
                     }${area ? ` en ${interventionAreaLabel(area)}` : ''}.`
                   : 'Les premiers partenaires seront référencés prochainement.'
               }
@@ -251,9 +264,9 @@ export default async function ProvidersPage({ searchParams }: Props) {
           color: 'text.secondary',
         }}
       >
-        Le référencement d’un prestataire dans cet annuaire ne vaut ni recommandation ni
-        partenariat commercial d’Infos Élus, sauf mention contraire sur la fiche. Il revient à
-        chaque comité de vérifier les prestations et les tarifs proposés avant tout engagement.
+        Le référencement d’un prestataire dans cet annuaire ne vaut ni recommandation ni partenariat
+        commercial d’Infos Élus, sauf mention contraire sur la fiche. Il revient à chaque comité de
+        vérifier les prestations et les tarifs proposés avant tout engagement.
       </Typography>
     </Container>
   )

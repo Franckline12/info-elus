@@ -12,6 +12,7 @@ import { Media } from './collections/Media'
 import { Categories } from './collections/Categories'
 import { Themes } from './collections/Themes'
 import { Tags } from './collections/Tags'
+import { ProviderCategories } from './collections/ProviderCategories'
 import { Articles } from './collections/Articles'
 import { Guides } from './collections/Guides'
 import { Quizzes } from './collections/Quizzes'
@@ -66,6 +67,7 @@ export default buildConfig({
     Categories,
     Themes,
     Tags,
+    ProviderCategories,
     Articles,
     Guides,
     Quizzes,

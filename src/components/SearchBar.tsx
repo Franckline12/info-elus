@@ -183,8 +183,8 @@ export function SearchBar({
   }
 
   /** Champ et filtre partagent le même traitement de surface : même papier,
-   *  même filet, même accent ocre au focus — jamais de bleu, qui ferait
-   *  ressembler la barre à un formulaire d'application. */
+   *  même filet, même accent bleu au focus. L'ocre est réservé à la rubrique
+   *  Jeux & Quiz (§ 5.3) et ne sert donc pas ici. */
   const surface = {
     display: 'flex',
     alignItems: 'center',
@@ -193,8 +193,8 @@ export function SearchBar({
     borderRadius: `${radius}px`,
     transition: 'border-color 160ms ease, box-shadow 160ms ease',
     '&:focus-within': {
-      borderColor: colors.accentQuiz,
-      boxShadow: `0 0 0 3px ${colors.sandPale}`,
+      borderColor: colors.blueBright,
+      boxShadow: `0 0 0 3px ${colors.bluePale}`,
     },
   }
 
@@ -453,9 +453,9 @@ export function SearchBar({
         <noscript>
           <Button
             type="submit"
-            color="accentQuiz"
+            color="primary"
             variant="contained"
-            sx={{ px: 3, py: 1.375, fontWeight: 600, color: colors.ink, whiteSpace: 'nowrap' }}
+            sx={{ px: 3, py: 1.375, fontWeight: 600, whiteSpace: 'nowrap' }}
           >
             {submitLabel}
           </Button>

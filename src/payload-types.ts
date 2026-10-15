@@ -72,6 +72,7 @@ export interface Config {
     categories: Category;
     themes: Theme;
     tags: Tag;
+    'provider-categories': ProviderCategory;
     articles: Article;
     guides: Guide;
     quizzes: Quiz;
@@ -92,6 +93,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     themes: ThemesSelect<false> | ThemesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    'provider-categories': ProviderCategoriesSelect<false> | ProviderCategoriesSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     guides: GuidesSelect<false> | GuidesSelect<true>;
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
@@ -228,6 +230,26 @@ export interface Tag {
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Les métiers de l’annuaire. Ils alimentent le champ « Catégorie » des fiches prestataire et les filtres de la page Prestataires, par ordre alphabétique.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-categories".
+ */
+export interface ProviderCategory {
+  id: number;
+  name: string;
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * Facultatif, à usage interne : précise ce que la catégorie couvre. N’apparaît pas sur le site.
+   */
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -511,7 +533,10 @@ export interface Provider {
     };
     [k: string]: unknown;
   } | null;
-  category: 'training' | 'legal' | 'accounting' | 'ticketing' | 'events';
+  /**
+   * Les catégories se gèrent dans Taxonomies › Catégories de prestataires.
+   */
+  category: number | ProviderCategory;
   /**
    * Une ou plusieurs régions. « France entière » suffit pour un prestataire national : il remonte alors sur toutes les régions.
    */
@@ -701,6 +726,10 @@ export interface PayloadLockedDocument {
         value: number | Tag;
       } | null)
     | ({
+        relationTo: 'provider-categories';
+        value: number | ProviderCategory;
+      } | null)
+    | ({
         relationTo: 'articles';
         value: number | Article;
       } | null)
@@ -844,6 +873,17 @@ export interface ThemesSelect<T extends boolean = true> {
 export interface TagsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-categories_select".
+ */
+export interface ProviderCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
   updatedAt?: T;
   createdAt?: T;
 }

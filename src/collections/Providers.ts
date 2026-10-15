@@ -5,7 +5,6 @@ import { profileEditor } from '../fields/contentEditor'
 import { slugField } from '../fields/slug'
 import { byPublishedFlag, revalidateContent } from '../hooks/revalidateContent'
 import { interventionAreaOptions } from '../lib/interventionAreas'
-import { providerCategoryOptions } from '../lib/providerCategories'
 
 const { afterChange, afterDelete } = revalidateContent('/prestataires', {
   isPublished: byPublishedFlag,
@@ -118,11 +117,15 @@ export const Providers: CollectionConfig = {
           fields: [
             {
               name: 'category',
-              type: 'select',
+              type: 'relationship',
               label: 'Catégorie',
+              relationTo: 'provider-categories',
               required: true,
-              index: true,
-              options: [...providerCategoryOptions],
+              hasMany: false,
+              admin: {
+                description:
+                  'Les catégories se gèrent dans Taxonomies › Catégories de prestataires.',
+              },
             },
             {
               name: 'interventionAreas',
