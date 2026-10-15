@@ -8,7 +8,7 @@ import StarBorderIcon from '@mui/icons-material/StarBorder'
 import AppLink from '@/components/AppLink'
 import CategoryLabel from '@/components/CategoryLabel'
 import { interventionAreaLabel } from '@/lib/interventionAreas'
-import { providerCategoryLabel } from '@/lib/providerCategories'
+import { providerCategory } from '@/lib/providerCategories'
 import { providerPath } from '@/lib/routes'
 import type { Provider } from '@/payload-types'
 import { colors, fonts, radius } from '@/theme/tokens'
@@ -24,10 +24,12 @@ type Props = {
  *
  * Conserve la même disposition que la rangée standard (photo/logo à gauche,
  * textes et informations à droite) mais dans des proportions agrandies,
- * avec un encadrement distinctif et un badge « Prestataire abonné ».
+ * avec un encadrement distinctif et un badge « Prestataire ».
  */
 export function SubscribedProviderCard({ provider }: Props) {
   const href = providerPath(provider)
+  // Catégorie supprimée après coup : la carte reste affichée, sans badge.
+  const category = providerCategory(provider.category)
   const areas = provider.interventionAreas ?? []
 
   return (
@@ -70,11 +72,11 @@ export function SubscribedProviderCard({ provider }: Props) {
               textTransform: 'uppercase',
             }}
           >
-            <StarBorderIcon sx={{ fontSize: '0.95rem' }} />
-            Prestataire abonné
+            Prestataire
+            <StarBorderIcon aria-hidden sx={{ fontSize: '0.95rem' }} />
           </Box>
 
-          <CategoryLabel name={providerCategoryLabel(provider.category)} />
+          {category ? <CategoryLabel name={category.name} /> : null}
         </Box>
 
         {/* Titre agrandi */}

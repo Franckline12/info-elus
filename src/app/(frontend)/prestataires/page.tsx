@@ -13,10 +13,10 @@ import ProviderRow from '@/components/provider/ProviderRow'
 import ProviderSubscriptionForm from '@/components/provider/ProviderSubscriptionForm'
 import SubscribedProviderCard from '@/components/provider/SubscribedProviderCard'
 import { interventionAreaLabel, interventionAreaValue } from '@/lib/interventionAreas'
-import { providerCategoryLabel, providerCategoryValue } from '@/lib/providerCategories'
 import {
   getAreasWithCount,
   getCategoriesWithCount,
+  getProviderCategories,
   getProviders,
   getSubscribedProviders,
 } from '@/lib/queries/providers'
@@ -109,14 +109,52 @@ export default async function ProvidersPage({ searchParams }: Props) {
         sx={{ border: 'none', borderTop: `1px solid ${rule}`, my: { xs: 3, md: 4 } }}
       />
 
-      {/* Section Prestataires abonnés (cartes grand format) */}
-      <Box component="section" aria-labelledby="prestataires-abonnes">
-        <SectionHeading
-          id="prestataires-abonnes"
-          title={`Prestataire${subscribedProviders.length > 1 ? 's' : ''} abonné${
-            subscribedProviders.length > 1 ? 's' : ''
-          }`}
+      {/* Filtres : ils s'appliquent aux prestataires abonnés comme aux référencés */}
+      <Box
+        role="search"
+        aria-label="Filtrer les prestataires"
+        sx={{ display: 'grid', gap: { xs: 1.5, md: 2 } }}
+      >
+        <FilterLinks
+          label="Filtrer par catégorie"
+          items={[
+            {
+              key: 'all',
+              label: 'Toutes les catégories',
+              href: providersPagePath({ area }),
+              active: !categorySlug,
+            },
+            ...categories.map((category) => ({
+              key: category.value,
+              label: `${category.label} (${category.count ?? 0})`,
+              href: providersPagePath({ categorySlug: category.value, area }),
+              active: category.value === categorySlug,
+            })),
+          ]}
         />
+
+        <FilterLinks
+          label="Filtrer par zone d’intervention"
+          items={[
+            {
+              key: 'all',
+              label: 'Toutes les zones',
+              href: providersPagePath({ categorySlug }),
+              active: !area,
+            },
+            ...areas.map((item) => ({
+              key: item.value,
+              label: `${item.label} (${item.count ?? 0})`,
+              href: providersPagePath({ categorySlug, area: item.value }),
+              active: item.value === area,
+            })),
+          ]}
+        />
+      </Box>
+
+      {/* Section Prestataires abonnés (cartes grand format) */}
+      <Box component="section" aria-labelledby="prestataires-abonnes" sx={{ mt: { xs: 4, md: 5 } }}>
+        <SectionHeading id="prestataires-abonnes" title="Prestataires abonnés" />
 
         {subscribedProviders.length > 0 ? (
           <Box sx={{ display: 'grid', gap: { xs: 2, md: 2.5 } }}>
@@ -152,51 +190,6 @@ export default async function ProvidersPage({ searchParams }: Props) {
       <Box component="section" aria-labelledby="prestataires-references" sx={{ mt: 0 }}>
         <SectionHeading id="prestataires-references" title="Prestataires référencés" />
 
-        <Box
-          sx={{
-            display: 'grid',
-            gap: { xs: 1.5, md: 2 },
-            pt: { xs: 1.5, md: 2 },
-            borderTop: `1px solid ${rule}`,
-          }}
-        >
-          <FilterLinks
-            label="Filtrer par catégorie"
-            items={[
-              {
-                key: 'all',
-                label: 'Toutes les catégories',
-                href: providersPagePath({ area }),
-                active: !categorySlug,
-              },
-              ...categories.map((category) => ({
-                key: category.value,
-                label: `${category.label} (${category.count ?? 0})`,
-                href: providersPagePath({ categorySlug: category.value, area }),
-                active: category.value === categorySlug,
-              })),
-            ]}
-          />
-
-          <FilterLinks
-            label="Filtrer par zone d’intervention"
-            items={[
-              {
-                key: 'all',
-                label: 'Toutes les zones',
-                href: providersPagePath({ categorySlug }),
-                active: !area,
-              },
-              ...areas.map((item) => ({
-                key: item.value,
-                label: `${item.label} (${item.count ?? 0})`,
-                href: providersPagePath({ categorySlug, area: item.value }),
-                active: item.value === area,
-              })),
-            ]}
-          />
-        </Box>
-
         <Typography
           component="p"
           aria-live="polite"
@@ -212,9 +205,7 @@ export default async function ProvidersPage({ searchParams }: Props) {
               description={
                 filtered
                   ? `Aucun prestataire référencé pour ce croisement${
-                      categorySlug
-                        ? ` de la catégorie « ${providerCategoryLabel(categorySlug)} »`
-                        : ''
+                      activeCategory ? ` de la catégorie « ${activeCategory.name} »` : ''
                     }${area ? ` en ${interventionAreaLabel(area)}` : ''}.`
                   : 'Les premiers partenaires seront référencés prochainement.'
               }
