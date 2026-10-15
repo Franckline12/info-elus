@@ -72,11 +72,13 @@ export interface Config {
     categories: Category;
     themes: Theme;
     tags: Tag;
+    'provider-categories': ProviderCategory;
     articles: Article;
     guides: Guide;
     quizzes: Quiz;
     'quiz-results': QuizResult;
     providers: Provider;
+    'provider-subscriptions': ProviderSubscription;
     testimonials: Testimonial;
     subscribers: Subscriber;
     'payload-kv': PayloadKv;
@@ -91,11 +93,13 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     themes: ThemesSelect<false> | ThemesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
+    'provider-categories': ProviderCategoriesSelect<false> | ProviderCategoriesSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     guides: GuidesSelect<false> | GuidesSelect<true>;
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
     'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
+    'provider-subscriptions': ProviderSubscriptionsSelect<false> | ProviderSubscriptionsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -226,6 +230,26 @@ export interface Tag {
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Les métiers de l’annuaire. Ils alimentent le champ « Catégorie » des fiches prestataire et les filtres de la page Prestataires, par ordre alphabétique.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-categories".
+ */
+export interface ProviderCategory {
+  id: number;
+  name: string;
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * Facultatif, à usage interne : précise ce que la catégorie couvre. N’apparaît pas sur le site.
+   */
+  description?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -438,7 +462,7 @@ export interface Quiz {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.
+ * Parties enregistrées par les visiteurs et coordonnées des participants ayant demandé leurs résultats.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "quiz-results".
@@ -455,7 +479,19 @@ export interface QuizResult {
    */
   total: number;
   /**
-   * Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.
+   * Nom de famille renseigné par le participant.
+   */
+  nom?: string | null;
+  /**
+   * Prénom renseigné par le participant.
+   */
+  prenom?: string | null;
+  /**
+   * Adresse email du participant pour l’envoi des résultats.
+   */
+  email?: string | null;
+  /**
+   * Entreprise ou CSE renseigné par le participant.
    */
   cseName?: string | null;
   playedAt?: string | null;
@@ -497,7 +533,10 @@ export interface Provider {
     };
     [k: string]: unknown;
   } | null;
-  category: 'training' | 'legal' | 'accounting' | 'ticketing' | 'events';
+  /**
+   * Les catégories se gèrent dans Taxonomies › Catégories de prestataires.
+   */
+  category: number | ProviderCategory;
   /**
    * Une ou plusieurs régions. « France entière » suffit pour un prestataire national : il remonte alors sur toutes les régions.
    */
@@ -552,9 +591,39 @@ export interface Provider {
    */
   slug?: string | null;
   /**
+   * Coché pour un prestataire abonné (payant). Sa fiche sera affichée en grand format dans la section « Prestataires abonnés » en tête de l’annuaire.
+   */
+  isSubscribed?: boolean | null;
+  /**
    * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le prestataire n’apparaît pas dans l’annuaire public.
    */
   published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Demandes d’abonnement des prestataires souhaitant être mis en avant dans l’annuaire en grand format.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-subscriptions".
+ */
+export interface ProviderSubscription {
+  id: number;
+  /**
+   * Nom de la structure prestataire ou de l’entreprise.
+   */
+  company: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  /**
+   * Passez le statut à « Abonné (Actif) » pour valider la demande (le mode de paiement sera connecté ultérieurement).
+   */
+  status: 'pending' | 'active' | 'cancelled';
+  /**
+   * Informations de suivi commercial, contact ou facturation.
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -657,6 +726,10 @@ export interface PayloadLockedDocument {
         value: number | Tag;
       } | null)
     | ({
+        relationTo: 'provider-categories';
+        value: number | ProviderCategory;
+      } | null)
+    | ({
         relationTo: 'articles';
         value: number | Article;
       } | null)
@@ -675,6 +748,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'providers';
         value: number | Provider;
+      } | null)
+    | ({
+        relationTo: 'provider-subscriptions';
+        value: number | ProviderSubscription;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -801,6 +878,17 @@ export interface TagsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-categories_select".
+ */
+export interface ProviderCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "articles_select".
  */
 export interface ArticlesSelect<T extends boolean = true> {
@@ -912,6 +1000,9 @@ export interface QuizResultsSelect<T extends boolean = true> {
   quiz?: T;
   score?: T;
   total?: T;
+  nom?: T;
+  prenom?: T;
+  email?: T;
   cseName?: T;
   playedAt?: T;
   updatedAt?: T;
@@ -944,7 +1035,22 @@ export interface ProvidersSelect<T extends boolean = true> {
         image?: T;
       };
   slug?: T;
+  isSubscribed?: T;
   published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-subscriptions_select".
+ */
+export interface ProviderSubscriptionsSelect<T extends boolean = true> {
+  company?: T;
+  nom?: T;
+  prenom?: T;
+  email?: T;
+  status?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

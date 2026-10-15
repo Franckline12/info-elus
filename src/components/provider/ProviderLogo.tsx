@@ -9,6 +9,13 @@ type Props = {
   provider: Pick<Provider, 'name' | 'logo'>
   /** Côté du cadre, en pixels. */
   size?: number
+  /**
+   * Rapport largeur/hauteur d'un cadre fluide : le cadre occupe alors toute la
+   * largeur de son parent (bandeau de la fiche) et `size` est ignoré.
+   */
+  ratio?: number
+  /** Attribut `sizes` de next/image pour le cadre fluide. */
+  sizes?: string
 }
 
 /**
@@ -30,7 +37,9 @@ const initials = (name: string): string =>
  * Purement décoratif : le nom du prestataire est toujours écrit à côté, donc
  * les initiales sont masquées aux lecteurs d'écran plutôt que répétées.
  */
-export function ProviderLogo({ provider, size = 72 }: Props) {
+export function ProviderLogo({ provider, size = 72, ratio, sizes }: Props) {
+  const fluid = ratio !== undefined
+
   return (
     <Box
       sx={{
@@ -38,24 +47,27 @@ export function ProviderLogo({ provider, size = 72 }: Props) {
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        width: size,
-        height: size,
+        ...(fluid ? { width: '100%', aspectRatio: String(ratio) } : { width: size, height: size }),
         border: `1px solid ${surfaceBorder}`,
         backgroundColor: colors.paperRaised,
         // Le logo respire dans son cadre : `fill` se cale sur la boîte de
         // remplissage, la marge doit donc être portée par le cadre lui-même.
-        p: 0.75,
+        p: fluid ? { xs: 2, md: 3 } : 0.75,
         overflow: 'hidden',
       }}
     >
       {provider.logo ? (
-        <MediaImage media={provider.logo} sizes={`${size}px`} ratio={1} fit="contain" />
+        fluid ? (
+          <MediaImage media={provider.logo} sizes={sizes ?? '100vw'} cover fit="contain" />
+        ) : (
+          <MediaImage media={provider.logo} sizes={`${size}px`} ratio={1} fit="contain" />
+        )
       ) : (
         <Typography
           aria-hidden
           component="span"
           sx={{
-            fontSize: size * 0.32,
+            fontSize: fluid ? 'clamp(2.5rem, 1.5rem + 5vw, 4.5rem)' : size * 0.32,
             fontWeight: 700,
             letterSpacing: '0.02em',
             color: colors.blueMid,

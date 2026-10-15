@@ -36,8 +36,19 @@ export type EmailLayoutInput = {
   footnotes?: string[]
 }
 
-const paragraph = (html: string): string =>
-  `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:${colors.ink};">${html}</p>`
+const paragraph = (html: string): string => {
+  const trimmed = html.trim()
+  if (
+    trimmed.startsWith('<div') ||
+    trimmed.startsWith('<table') ||
+    trimmed.startsWith('<section') ||
+    trimmed.startsWith('<h2') ||
+    trimmed.startsWith('<h3')
+  ) {
+    return html
+  }
+  return `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:${colors.ink};">${html}</p>`
+}
 
 const footnote = (html: string): string =>
   `<p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:${colors.textSecondary};">${html}</p>`

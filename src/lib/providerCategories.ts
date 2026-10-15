@@ -1,22 +1,15 @@
+import type { Provider, ProviderCategory } from '@/payload-types'
+
 /**
- * Catégories de l'annuaire, fixées par le cahier des charges (§ 2.4).
- * Déclarées dans un module neutre : la collection Payload et les pages du front
- * s'appuient sur la même liste, sans que le front importe la configuration CMS.
+ * Catégories de l'annuaire (§ 2.4), désormais portées par la collection
+ * `provider-categories` : l'équipe éditoriale les ajoute et les renomme depuis
+ * l'admin, sans passer par le code.
+ *
+ * Le champ `category` d'une fiche vaut un identifiant quand la lecture est
+ * faite à `depth: 0`, et le document complet au-delà. Il peut aussi être vide
+ * si la catégorie a été supprimée après coup : la fiche reste en ligne, sans
+ * badge ni lien de rubrique. Ce garde-fou couvre les deux cas.
  */
-export const providerCategoryOptions = [
-  { value: 'training', label: 'Formation' },
-  { value: 'legal', label: 'Assistance juridique' },
-  { value: 'accounting', label: 'Comptabilité & audit' },
-  { value: 'ticketing', label: 'Billetterie & ASC' },
-  { value: 'events', label: 'Événementiel' },
-] as const
-
-export type ProviderCategoryValue = (typeof providerCategoryOptions)[number]['value']
-
-/** Libellé français d'une catégorie de prestataire. */
-export const providerCategoryLabel = (value: string): string =>
-  providerCategoryOptions.find((option) => option.value === value)?.label ?? value
-
-/** Une valeur de catégorie connue, ou `undefined` si l'URL en propose une autre. */
-export const providerCategoryValue = (value?: string | null): string | undefined =>
-  providerCategoryOptions.some((option) => option.value === value) ? (value as string) : undefined
+export const providerCategory = (
+  value: Provider['category'] | null | undefined,
+): ProviderCategory | null => (value && typeof value === 'object' ? value : null)

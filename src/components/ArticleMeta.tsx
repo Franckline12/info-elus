@@ -17,6 +17,12 @@ type Props = {
    * `default` : phrases complètes, pour l'en-tête d'un contenu.
    */
   variant?: 'default' | 'compact'
+  /**
+   * Place la date de publication en tête et l'accentue. Une actualité se situe
+   * d'abord dans le temps : sa date compte davantage que sur un article de fond
+   * (§ 2.3).
+   */
+  emphasizeDate?: boolean
   /** Hérite de la couleur ambiante : utile sur les fonds bleu profond. */
   inherit?: boolean
 }
@@ -32,6 +38,7 @@ export function ArticleMeta({
   readingTime,
   updateThresholdHours = 24,
   variant = 'default',
+  emphasizeDate = false,
   inherit = false,
 }: Props) {
   const published = toDate(publishedAt)
@@ -44,48 +51,44 @@ export function ArticleMeta({
     updated.getTime() - published.getTime() > updateThresholdHours * 3600 * 1000
 
   const iconStyles = { fontSize: '0.95em', opacity: 0.8 }
-  const parts: React.ReactNode[] = []
+  const itemStyles = { display: 'inline-flex', alignItems: 'center', gap: 0.5 }
 
-  if (typeof readingTime === 'number' && readingTime > 0) {
-    parts.push(
-      <Box
-        component="span"
-        key="reading"
-        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-      >
+  const readingPart =
+    typeof readingTime === 'number' && readingTime > 0 ? (
+      <Box component="span" sx={itemStyles}>
         <AccessTimeOutlinedIcon aria-hidden sx={iconStyles} />
         {readingTime} min de lecture
-      </Box>,
-    )
-  }
+      </Box>
+    ) : null
 
-  if (published) {
-    parts.push(
-      <Box
-        component="time"
-        key="published"
-        dateTime={toDateTimeAttribute(published)}
-        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-      >
-        <CalendarTodayOutlinedIcon aria-hidden sx={iconStyles} />
-        {compact ? formatMediumDate(published) : `Publié le ${formatLongDate(published)}`}
-      </Box>,
-    )
-  }
+  const publishedPart = published ? (
+    <Box
+      component="time"
+      dateTime={toDateTimeAttribute(published)}
+      sx={{
+        ...itemStyles,
+        ...(emphasizeDate ? { fontWeight: 600, color: inherit ? 'inherit' : 'text.primary' } : {}),
+      }}
+    >
+      <CalendarTodayOutlinedIcon aria-hidden sx={iconStyles} />
+      {compact ? formatMediumDate(published) : `Publié le ${formatLongDate(published)}`}
+    </Box>
+  ) : null
 
-  if (showUpdated) {
-    parts.push(
-      <Box
-        component="time"
-        key="updated"
-        dateTime={toDateTimeAttribute(updated)}
-        sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}
-      >
-        <UpdateOutlinedIcon aria-hidden sx={iconStyles} />
-        {compact ? `MàJ ${formatMediumDate(updated)}` : `Mis à jour le ${formatLongDate(updated)}`}
-      </Box>,
-    )
-  }
+  const updatedPart = showUpdated ? (
+    <Box component="time" dateTime={toDateTimeAttribute(updated)} sx={itemStyles}>
+      <UpdateOutlinedIcon aria-hidden sx={iconStyles} />
+      {compact ? `MàJ ${formatMediumDate(updated)}` : `Mis à jour le ${formatLongDate(updated)}`}
+    </Box>
+  ) : null
+
+  // Le temps de lecture ouvre la ligne, sauf quand la date prime : sur une
+  // actualité, c'est elle qu'on lit en premier.
+  const parts = (
+    emphasizeDate
+      ? [publishedPart, readingPart, updatedPart]
+      : [readingPart, publishedPart, updatedPart]
+  ).filter((part): part is React.ReactElement => part !== null)
 
   if (parts.length === 0) return null
 

@@ -61,7 +61,7 @@ test.describe('Articles et actualité', () => {
     const pages = [
       { path: '/guides', heading: 'Guides CSE' },
       { path: '/jeux-quiz', heading: 'Jeux & Quiz' },
-      { path: '/prestataires', heading: 'Annuaire des prestataires' },
+      { path: '/prestataires', heading: 'Réseau de prestataires' },
       { path: '/recherche', heading: 'Rechercher' },
     ]
 

@@ -12,11 +12,13 @@ import { Media } from './collections/Media'
 import { Categories } from './collections/Categories'
 import { Themes } from './collections/Themes'
 import { Tags } from './collections/Tags'
+import { ProviderCategories } from './collections/ProviderCategories'
 import { Articles } from './collections/Articles'
 import { Guides } from './collections/Guides'
 import { Quizzes } from './collections/Quizzes'
 import { QuizResults } from './collections/QuizResults'
 import { Providers } from './collections/Providers'
+import { ProviderSubscriptions } from './collections/ProviderSubscriptions'
 import { Testimonials } from './collections/Testimonials'
 import { Subscribers } from './collections/Subscribers'
 import { fr } from '@payloadcms/translations/languages/fr'
@@ -65,11 +67,13 @@ export default buildConfig({
     Categories,
     Themes,
     Tags,
+    ProviderCategories,
     Articles,
     Guides,
     Quizzes,
     QuizResults,
     Providers,
+    ProviderSubscriptions,
     Testimonials,
     Subscribers,
   ],

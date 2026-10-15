@@ -5,7 +5,6 @@ import { profileEditor } from '../fields/contentEditor'
 import { slugField } from '../fields/slug'
 import { byPublishedFlag, revalidateContent } from '../hooks/revalidateContent'
 import { interventionAreaOptions } from '../lib/interventionAreas'
-import { providerCategoryOptions } from '../lib/providerCategories'
 
 const { afterChange, afterDelete } = revalidateContent('/prestataires', {
   isPublished: byPublishedFlag,
@@ -48,7 +47,7 @@ export const Providers: CollectionConfig = {
   admin: {
     group: 'Contenus',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'category', 'published'],
+    defaultColumns: ['name', 'category', 'isSubscribed', 'published'],
     listSearchableFields: ['name', 'shortDescription'],
     description:
       'Annuaire des partenaires des élus. Une fiche n’apparaît sur le site qu’une fois cochée « Visible sur le site ».',
@@ -118,11 +117,15 @@ export const Providers: CollectionConfig = {
           fields: [
             {
               name: 'category',
-              type: 'select',
+              type: 'relationship',
               label: 'Catégorie',
+              relationTo: 'provider-categories',
               required: true,
-              index: true,
-              options: [...providerCategoryOptions],
+              hasMany: false,
+              admin: {
+                description:
+                  'Les catégories se gèrent dans Taxonomies › Catégories de prestataires.',
+              },
             },
             {
               name: 'interventionAreas',
@@ -182,6 +185,18 @@ export const Providers: CollectionConfig = {
       ],
     },
     slugField('name'),
+    {
+      name: 'isSubscribed',
+      type: 'checkbox',
+      label: 'Prestataire abonné (Mise en avant)',
+      defaultValue: false,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Coché pour un prestataire abonné (payant). Sa fiche sera affichée en grand format dans la section « Prestataires abonnés » en tête de l’annuaire.',
+      },
+    },
     {
       name: 'published',
       type: 'checkbox',

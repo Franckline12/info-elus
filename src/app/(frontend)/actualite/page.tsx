@@ -1,160 +1,286 @@
 import type { Metadata } from 'next'
 import Box from '@mui/material/Box'
-import Card from '@mui/material/Card'
-import Divider from '@mui/material/Divider'
 import Grid from '@mui/material/Grid'
+import Paper from '@mui/material/Paper'
 import Typography from '@mui/material/Typography'
+import Chip from '@mui/material/Chip'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined'
 
 import AppLink from '@/components/AppLink'
-import ArticleListItem from '@/components/article/ArticleListItem'
 import FeaturedArticle from '@/components/article/FeaturedArticle'
-import CategoryFilter from '@/components/CategoryFilter'
+import NewsFeed from '@/components/article/NewsFeed'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
+import NewsletterBlock from '@/components/NewsletterBlock'
 import PageHero from '@/components/PageHero'
 import PaginationLinks from '@/components/PaginationLinks'
-import PanelCard from '@/components/PanelCard'
 import SectionHeading from '@/components/SectionHeading'
-import TagList from '@/components/TagList'
-import { getArticles, getFeaturedNews } from '@/lib/queries/articles'
+import { getFeaturedNews, getLatestNews } from '@/lib/queries/articles'
 import { getCategories } from '@/lib/queries/categories'
-import { getTags } from '@/lib/queries/tags'
-import { listingPagePath, listingPath, parsePage, tagPath } from '@/lib/routes'
+import { categoryPath, listingPath, newsPagePath, parsePage } from '@/lib/routes'
+import { absoluteUrl, siteName } from '@/lib/site'
+import type { Article, Category } from '@/payload-types'
+import { colors, fonts, radius, surfaceBorder } from '@/theme/tokens'
 
 const PER_PAGE = 10
 
-export const metadata: Metadata = {
-  title: 'Actualité',
-  description:
-    'Le fil d’actualité juridique et sociale du CSE : jurisprudence, réformes et décisions qui changent le quotidien des élus.',
-}
+const HERO_TITLE = 'Toute l’actualité CSE'
+
+const DESCRIPTION =
+  'Le fil d’actualité juridique et sociale du CSE : jurisprudence, réformes et décisions qui changent le quotidien des élus.'
 
 type Props = {
-  searchParams: Promise<{ categorie?: string; tag?: string; page?: string }>
+  searchParams: Promise<{ page?: string }>
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { page: pageParam } = await searchParams
+  const page = parsePage(pageParam)
+  const url = absoluteUrl(newsPagePath(page))
+
+  const title = page > 1 ? `Actualité — page ${page}` : 'Actualité'
+
+  return {
+    title,
+    description: DESCRIPTION,
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${title} — ${siteName}`,
+      description: DESCRIPTION,
+      url,
+      siteName,
+      locale: 'fr_FR',
+      type: 'website',
+    },
+  }
 }
 
 export default async function ActualitePage({ searchParams }: Props) {
-  const { categorie, tag, page: pageParam } = await searchParams
+  const { page: pageParam } = await searchParams
   const page = parsePage(pageParam)
 
-  // Le grand format n'ouvre que la première page, et sans filtre actif :
-  // au-delà, la page est un simple fil chronologique.
-  const showFeatured = page === 1 && !categorie && !tag
-  const featured = showFeatured ? await getFeaturedNews() : null
-
-  const [result, categories, tags] = await Promise.all([
-    getArticles({
-      type: 'news',
-      categorySlug: categorie,
-      tagSlug: tag,
-      page,
-      limit: PER_PAGE,
-      excludeIds: featured ? [featured.id] : [],
-    }),
+  const [featured, categories] = await Promise.all([
+    getFeaturedNews(),
     getCategories(),
-    getTags(),
   ])
 
-  const activeCategory = categories.find((category) => category.slug === categorie)
-  const activeTag = tags.find((item) => item.slug === tag)
-  const isEmpty = !featured && result.docs.length === 0
+  const feed = await getLatestNews({ page, limit: PER_PAGE, excludeId: featured?.id })
+
+  const lead = page === 1 ? featured : null
+  const isEmpty = featured === null && feed.docs.length === 0
 
   return (
     <Container sx={{ py: { xs: 3, md: 4 } }}>
+      {/* Bandeau Supérieur style Journal / Masthead Ticker */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+          pb: 1.5,
+          mb: 3,
+          borderBottom: `2px solid ${colors.blueDeep}`,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1,
+              px: 1.5,
+              py: 0.5,
+              bgcolor: colors.blueDeep,
+              color: colors.paper,
+              borderRadius: '4px',
+              fontSize: '0.6875rem',
+              fontWeight: 800,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                bgcolor: colors.accentQuiz,
+              }}
+            />
+            ÉDITION DU JOUR
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              fontFamily: fonts.sans,
+              fontWeight: 700,
+              color: colors.textSecondary,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            FIL D'INFORMATION JURIDIQUE & SOCIALE
+          </Typography>
+        </Box>
+
+        <Typography
+          variant="caption"
+          sx={{
+            color: colors.blueMid,
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            display: { xs: 'none', sm: 'block' },
+          }}
+        >
+          Informations en direct pour les élus de CSE
+        </Typography>
+      </Box>
+
+      {/* Hero Principal */}
       <PageHero
-        title="Toute l’actualité CSE"
-        description="Les dernières informations juridiques, sociales et pratiques pour les élus du CSE."
+        title={HERO_TITLE}
+        description="Jurisprudence, réformes, accords : les dernières informations juridiques, sociales et pratiques pour les élus du CSE, de la plus récente à la plus ancienne."
       />
 
-      <Grid container spacing={{ xs: 3, md: 4 }} sx={{ mt: { xs: 1, md: 1.5 } }}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          {activeTag || activeCategory ? (
-            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-              Filtre actif : {activeTag ? `#${activeTag.name}` : activeCategory?.name}{' '}
-              <AppLink href={listingPagePath('news')} sx={{ ml: 1 }}>
-                Retirer le filtre
-              </AppLink>
-            </Typography>
-          ) : null}
-
-          {isEmpty ? (
-            <EmptyState
-              title="Aucune actualité pour le moment"
-              description={
-                activeCategory
-                  ? `Aucune actualité publiée dans la catégorie « ${activeCategory.name} ».`
-                  : activeTag
-                    ? `Aucune actualité publiée avec le tag « ${activeTag.name} ».`
-                    : 'Le fil d’actualité sera alimenté prochainement.'
-              }
-            />
-          ) : null}
-
-          {featured ? (
-            <Box
-              component="section"
-              aria-label="À la une de l’actualité"
-              sx={{ mb: { xs: 4, md: 5 } }}
-            >
-              <FeaturedArticle article={featured} />
-            </Box>
-          ) : null}
-
-          {result.docs.length > 0 ? (
-            <Box component="section" aria-labelledby="fil-actualite">
-              <SectionHeading
-                id="fil-actualite"
-                title={featured ? 'Les autres actualités' : 'Le fil d’actualité'}
-              />
-
-              <Card>
-                <Box sx={{ px: { xs: 2, md: 2.5 } }}>
-                  {result.docs.map((article, index) => (
-                    <Box key={article.id}>
-                      {index > 0 ? <Divider /> : null}
-                      <Box sx={{ py: { xs: 2, md: 2.5 } }}>
-                        <ArticleListItem article={article} />
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              </Card>
-            </Box>
-          ) : null}
-
-          <PaginationLinks
-            basePath={listingPath('news')}
-            page={result.page ?? 1}
-            totalPages={result.totalPages}
-            params={{ categorie, tag }}
+      <Box sx={{ mt: { xs: 3, md: 4 } }}>
+        {isEmpty ? (
+          <EmptyState
+            title="Aucune actualité pour le moment"
+            description="Le fil d’actualité sera alimenté prochainement. En attendant, les articles de fond et les guides sont accessibles depuis le menu."
           />
-        </Grid>
+        ) : null}
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Box sx={{ display: 'grid', gap: { xs: 2, md: 2.5 } }}>
-            <PanelCard title="Filtrer par catégorie" id="filtre-categorie">
-              <CategoryFilter
-                type="news"
-                categories={categories}
-                activeSlug={categorie}
-                layout="stacked"
-              />
-            </PanelCard>
-
-            {tags.length > 0 ? (
-              <PanelCard title="Tags populaires" id="tags-populaires">
-                <TagList
-                  tags={tags}
-                  variant="filled"
-                  hash
-                  label="Filtrer par tag"
-                  hrefFor={(item) => tagPath('news', item.slug ?? '')}
-                />
-              </PanelCard>
-            ) : null}
+        {lead ? (
+          <Box component="section" aria-label="À la une de l’actualité">
+            <FeaturedArticle article={lead} headingLevel="h2" />
           </Box>
-        </Grid>
-      </Grid>
+        ) : null}
+
+        {feed.docs.length > 0 ? (
+          <Box
+            component="section"
+            aria-labelledby="fil-actualite"
+            sx={{ mt: lead ? { xs: 5, md: 6 } : 0 }}
+          >
+            <Grid container spacing={{ xs: 3, md: 4 }}>
+              {/* Colonne principale : Fil d'actualité */}
+              <Grid size={{ xs: 12, md: 8 }}>
+                <SectionHeading
+                  id="fil-actualite"
+                  title={lead ? 'Les autres actualités' : 'Le fil d’actualité'}
+                />
+
+                <NewsFeed articles={feed.docs} />
+
+                <PaginationLinks
+                  basePath={listingPath('news')}
+                  page={feed.page ?? 1}
+                  totalPages={feed.totalPages}
+                />
+              </Grid>
+
+              {/* Colonne latérale : Informations & Widgets Éditoriaux */}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: { xs: 3, md: 4 },
+                    position: { md: 'sticky' },
+                    top: 24,
+                  }}
+                >
+                  {/* Widget 1 : Newsletter */}
+                  <NewsletterBlock source="/actualite" component="h3" headingId="newsletter-sidebar" />
+
+                  {/* Widget 2 : Thématiques d'actualité */}
+                  {categories.length > 0 ? (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 3,
+                        bgcolor: colors.paperRaised,
+                        border: `1px solid ${surfaceBorder}`,
+                        borderRadius: `${radius}px`,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                        <LocalOfferOutlinedIcon sx={{ fontSize: '1.25rem', color: colors.blueMid }} />
+                        <Typography
+                          variant="h3"
+                          component="h3"
+                          sx={{ fontSize: '1.125rem', fontWeight: 700 }}
+                        >
+                          Dossiers par catégorie
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                        Consultez tous nos articles de fond classés par thématique juridique et sociale.
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {categories.map((cat) => (
+                          <Chip
+                            key={cat.id}
+                            label={cat.name}
+                            component={AppLink}
+                            href={cat.slug ? categoryPath(cat.slug) : '/articles'}
+                            clickable
+                            size="small"
+                            sx={{
+                              bgcolor: colors.paper,
+                              color: colors.ink,
+                              border: `1px solid ${surfaceBorder}`,
+                              fontWeight: 500,
+                              fontSize: '0.8125rem',
+                              '&:hover': {
+                                bgcolor: colors.bluePale,
+                                color: colors.blueDeep,
+                                borderColor: colors.blueBright,
+                              },
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Paper>
+                  ) : null}
+
+                  {/* Widget 3 : Encadré "Repère CSE" */}
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 3,
+                      bgcolor: colors.sandPale,
+                      border: `1px solid ${surfaceBorder}`,
+                      borderRadius: `${radius}px`,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <InfoOutlinedIcon sx={{ fontSize: '1.25rem', color: colors.ink }} />
+                      <Typography
+                        variant="h3"
+                        component="h3"
+                        sx={{ fontSize: '1.0625rem', fontWeight: 700, color: colors.ink }}
+                      >
+                        Repère CSE
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ color: colors.ink, lineHeight: 1.6 }}>
+                      Les actualités juridiques publiées sur Infos Élus sont rédigées et vérifiées pour
+                      vous guider dans l'exercice de votre mandat d'élu (CSSCT, secrétaire, trésorier).
+                    </Typography>
+                  </Paper>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+        ) : null}
+      </Box>
     </Container>
   )
 }
+
+
+
