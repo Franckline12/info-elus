@@ -94,17 +94,16 @@ export default async function ProviderPage({ params }: Props) {
 
       <Box component="article" sx={{ mt: { xs: 2.5, md: 3 } }}>
         <Box component="header">
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: { xs: 2, sm: 2.5 },
-              mb: 2,
-            }}
-          >
-            <ProviderLogo provider={provider} size={88} />
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: { xs: 2, md: 2.5 } }}>
+              <ProviderLogo
+                provider={provider}
+                ratio={16 / 7}
+                sizes="(max-width: 844px) 90vw, 760px"
+              />
+            </Box>
 
-            <Box sx={{ minWidth: 0 }}>
+            <Box>
               {category ? (
                 <Box sx={{ mb: 1 }}>
                   <CategoryLabel name={category.name} href={categoryHref} />

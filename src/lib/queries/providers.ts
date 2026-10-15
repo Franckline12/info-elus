@@ -30,7 +30,7 @@ const filters = ({
   area?: string
   excludeIds?: number[]
 }): Where[] => [
-  ...(categorySlug ? [{ category: { equals: categorySlug } } satisfies Where] : []),
+  ...(categorySlug ? [{ 'category.slug': { equals: categorySlug } } satisfies Where] : []),
   ...(area ? [{ interventionAreas: { in: matchingAreas(area) } } satisfies Where] : []),
   ...(excludeIds && excludeIds.length > 0 ? [{ id: { not_in: excludeIds } } satisfies Where] : []),
 ]
