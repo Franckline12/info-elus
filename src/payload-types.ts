@@ -78,6 +78,7 @@ export interface Config {
     quizzes: Quiz;
     'quiz-results': QuizResult;
     providers: Provider;
+    'provider-subscriptions': ProviderSubscription;
     testimonials: Testimonial;
     subscribers: Subscriber;
     'payload-kv': PayloadKv;
@@ -98,6 +99,7 @@ export interface Config {
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
     'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
+    'provider-subscriptions': ProviderSubscriptionsSelect<false> | ProviderSubscriptionsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -460,7 +462,7 @@ export interface Quiz {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.
+ * Parties enregistrées par les visiteurs et coordonnées des participants ayant demandé leurs résultats.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "quiz-results".
@@ -477,7 +479,19 @@ export interface QuizResult {
    */
   total: number;
   /**
-   * Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.
+   * Nom de famille renseigné par le participant.
+   */
+  nom?: string | null;
+  /**
+   * Prénom renseigné par le participant.
+   */
+  prenom?: string | null;
+  /**
+   * Adresse email du participant pour l’envoi des résultats.
+   */
+  email?: string | null;
+  /**
+   * Entreprise ou CSE renseigné par le participant.
    */
   cseName?: string | null;
   playedAt?: string | null;
@@ -577,9 +591,39 @@ export interface Provider {
    */
   slug?: string | null;
   /**
+   * Coché pour un prestataire abonné (payant). Sa fiche sera affichée en grand format dans la section « Prestataires abonnés » en tête de l’annuaire.
+   */
+  isSubscribed?: boolean | null;
+  /**
    * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le prestataire n’apparaît pas dans l’annuaire public.
    */
   published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Demandes d’abonnement des prestataires souhaitant être mis en avant dans l’annuaire en grand format.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-subscriptions".
+ */
+export interface ProviderSubscription {
+  id: number;
+  /**
+   * Nom de la structure prestataire ou de l’entreprise.
+   */
+  company: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  /**
+   * Passez le statut à « Abonné (Actif) » pour valider la demande (le mode de paiement sera connecté ultérieurement).
+   */
+  status: 'pending' | 'active' | 'cancelled';
+  /**
+   * Informations de suivi commercial, contact ou facturation.
+   */
+  notes?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -704,6 +748,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'providers';
         value: number | Provider;
+      } | null)
+    | ({
+        relationTo: 'provider-subscriptions';
+        value: number | ProviderSubscription;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -952,6 +1000,9 @@ export interface QuizResultsSelect<T extends boolean = true> {
   quiz?: T;
   score?: T;
   total?: T;
+  nom?: T;
+  prenom?: T;
+  email?: T;
   cseName?: T;
   playedAt?: T;
   updatedAt?: T;
@@ -984,7 +1035,22 @@ export interface ProvidersSelect<T extends boolean = true> {
         image?: T;
       };
   slug?: T;
+  isSubscribed?: T;
   published?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "provider-subscriptions_select".
+ */
+export interface ProviderSubscriptionsSelect<T extends boolean = true> {
+  company?: T;
+  nom?: T;
+  prenom?: T;
+  email?: T;
+  status?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

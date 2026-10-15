@@ -1,11 +1,7 @@
 import type { PaginatedDocs, Where } from 'payload'
 
 import type { FilterOption } from '@/lib/filterOptions'
-import {
-  NATIONWIDE_AREA,
-  interventionAreaOptions,
-  matchingAreas,
-} from '@/lib/interventionAreas'
+import { NATIONWIDE_AREA, interventionAreaOptions, matchingAreas } from '@/lib/interventionAreas'
 import type { Provider, ProviderCategory } from '@/payload-types'
 
 import { getPayloadClient } from './payload'
@@ -25,9 +21,18 @@ const PUBLISHED: Where = { published: { equals: true } }
  * remonte aussi les prestataires déclarés « France entière » : ils y
  * interviennent, les masquer viderait l'annuaire sans raison.
  */
-const filters = ({ categorySlug, area }: { categorySlug?: string; area?: string }): Where[] => [
-  ...(categorySlug ? [{ 'category.slug': { equals: categorySlug } } satisfies Where] : []),
+const filters = ({
+  categorySlug,
+  area,
+  excludeIds,
+}: {
+  categorySlug?: string
+  area?: string
+  excludeIds?: number[]
+}): Where[] => [
+  ...(categorySlug ? [{ category: { equals: categorySlug } } satisfies Where] : []),
   ...(area ? [{ interventionAreas: { in: matchingAreas(area) } } satisfies Where] : []),
+  ...(excludeIds && excludeIds.length > 0 ? [{ id: { not_in: excludeIds } } satisfies Where] : []),
 ]
 
 export type GetProvidersArgs = {
@@ -35,6 +40,7 @@ export type GetProvidersArgs = {
   area?: string
   page?: number
   limit?: number
+  excludeIds?: number[]
 }
 
 /** Annuaire paginé, classé par ordre alphabétique. */
@@ -43,17 +49,39 @@ export async function getProviders({
   area,
   page = 1,
   limit = 12,
+  excludeIds,
 }: GetProvidersArgs = {}): Promise<PaginatedDocs<Provider>> {
   const payload = await getPayloadClient()
 
   return payload.find({
     collection: 'providers',
-    where: { and: [PUBLISHED, ...filters({ categorySlug, area })] },
+    where: { and: [PUBLISHED, ...filters({ categorySlug, area, excludeIds })] },
     sort: 'name',
     depth: 1,
     page,
     limit,
   })
+}
+
+/** Prestataires abonnés (mis en avant en grand format en tête de l'annuaire). */
+export async function getSubscribedProviders({
+  categorySlug,
+  area,
+  limit = 6,
+}: { categorySlug?: string; area?: string; limit?: number } = {}): Promise<Provider[]> {
+  const payload = await getPayloadClient()
+
+  const { docs } = await payload.find({
+    collection: 'providers',
+    where: {
+      and: [PUBLISHED, { isSubscribed: { equals: true } }, ...filters({ categorySlug, area })],
+    },
+    sort: 'name',
+    depth: 1,
+    limit,
+  })
+
+  return docs
 }
 
 export async function getProviderBySlug(slug: string): Promise<Provider | null> {
@@ -138,9 +166,9 @@ export async function getCategoriesWithCount({
  * Une seule lecture plutôt que dix-neuf `count` : l'annuaire reste de taille
  * modeste, et le calcul en mémoire évite d'interroger la base par option.
  */
-export async function getAreasWithCount({
-  categorySlug,
-}: { categorySlug?: string } = {}): Promise<FilterOption[]> {
+export async function getAreasWithCount({ categorySlug }: { categorySlug?: string } = {}): Promise<
+  FilterOption[]
+> {
   const payload = await getPayloadClient()
 
   const { docs } = await payload.find({

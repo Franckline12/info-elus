@@ -1,6 +1,6 @@
 import { jsonError, readJsonBody, tooManyRequests } from '@/lib/api'
 import { readQuizReference } from '@/lib/quiz/api'
-import { findAnswersIssue, gradeQuiz } from '@/lib/quiz/grade'
+import { findAnswersIssue, gradeQuiz, sanitizeCseName } from '@/lib/quiz/grade'
 import { clientKey, createRateLimiter } from '@/lib/rateLimit'
 import { findPublishedQuiz } from '@/lib/queries/quizzes'
 import { getPayloadClient } from '@/lib/queries/payload'
@@ -47,11 +47,80 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const grade = gradeQuiz(questions, body.answers as number[])
+  const cseName = sanitizeCseName(entrepriseCse)
   const fullName = `${prenom} ${nom}`.trim()
+  const resultId = typeof body.resultId === 'number' ? body.resultId : undefined
 
   const payload = await getPayloadClient()
 
+  // Enregistrement des coordonnées dans le back-office (collection quiz-results)
+  try {
+    let updated = false
+    if (resultId) {
+      try {
+        await payload.update({
+          collection: 'quiz-results',
+          id: resultId,
+          data: {
+            nom,
+            prenom,
+            email,
+            ...(cseName ? { cseName } : {}),
+          },
+          depth: 0,
+          overrideAccess: true,
+        })
+        updated = true
+      } catch (err) {
+        payload.logger.warn({ err }, 'Mise à jour du résultat existant impossible, création d’une entrée')
+        updated = false
+      }
+    }
+
+    if (!updated) {
+      await payload.create({
+        collection: 'quiz-results',
+        data: {
+          quiz: quiz.id,
+          score: grade.score,
+          total: grade.total,
+          nom,
+          prenom,
+          email,
+          ...(cseName ? { cseName } : {}),
+          playedAt: new Date().toISOString(),
+        },
+        depth: 0,
+        overrideAccess: true,
+      })
+    }
+  } catch (error) {
+    payload.logger.error(
+      { err: error },
+      'Enregistrement des coordonnées du participant au quiz impossible',
+    )
+  }
+
   const quizUrl = quiz.slug ? absoluteUrl(`${quizzesPath}/${quiz.slug}`) : undefined
+
+  // Construction du récapitulatif détaillé question par question
+  const reviewQuestions = grade.answers.map((answer, index) => {
+    const question = questions[index]
+    const prompt = question?.prompt ?? `Question ${index + 1}`
+    const options = question?.options ?? []
+    const userAnswerText = options[answer.answer]?.text ?? '—'
+    const correctAnswerText = options[answer.correctIndex]?.text ?? '—'
+    const explanation = question?.explanation?.trim() || answer.explanation || null
+
+    return {
+      questionNumber: index + 1,
+      prompt,
+      isCorrect: answer.isCorrect,
+      userAnswer: userAnswerText,
+      correctAnswer: correctAnswerText,
+      explanation,
+    }
+  })
 
   const { subject, html, text } = buildQuizResultEmail({
     recipientName: fullName,
@@ -60,7 +129,8 @@ export async function POST(request: Request): Promise<Response> {
     total: grade.total,
     correctCount: grade.correctCount,
     questionCount: grade.questionCount,
-    companyCse: entrepriseCse || null,
+    questions: reviewQuestions,
+    companyCse: cseName || null,
     quizUrl,
   })
 

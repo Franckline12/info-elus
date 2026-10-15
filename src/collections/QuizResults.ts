@@ -22,17 +22,16 @@ export const QuizResults: CollectionConfig = {
   admin: {
     group: 'Données',
     hidden: false,
-    useAsTitle: 'cseName',
-    defaultColumns: ['quiz', 'score', 'total', 'cseName', 'playedAt'],
+    useAsTitle: 'email',
+    defaultColumns: ['quiz', 'nom', 'prenom', 'email', 'cseName', 'score', 'total', 'playedAt'],
     description:
-      'Parties enregistrées par les visiteurs. Lecture seule en pratique : les scores sont calculés par le serveur.',
+      'Parties enregistrées par les visiteurs et coordonnées des participants ayant demandé leurs résultats.',
   },
   access: {
     /**
-     * Création publique : le front enregistre la partie d'un visiteur anonyme.
-     * La route `/api/quiz/result` est le seul chemin prévu — elle recalcule le
-     * score et limite le débit. Le hook ci-dessous rattrape ce qu'un appel
-     * direct à l'API REST pourrait tenter d'écrire.
+     * Création publique : le front enregistre la partie d'un visiteur.
+     * Les routes `/api/quiz/result` et `/api/quiz/send-result` sont les chemins prévus.
+     * Le hook ci-dessous rattrape ce qu'un appel direct à l'API REST pourrait tenter d'écrire.
      */
     create: anyone,
     read: loggedIn,
@@ -98,14 +97,40 @@ export const QuizResults: CollectionConfig = {
       },
     },
     {
+      name: 'nom',
+      type: 'text',
+      label: 'Nom',
+      index: true,
+      admin: {
+        description: 'Nom de famille renseigné par le participant.',
+      },
+    },
+    {
+      name: 'prenom',
+      type: 'text',
+      label: 'Prénom',
+      index: true,
+      admin: {
+        description: 'Prénom renseigné par le participant.',
+      },
+    },
+    {
+      name: 'email',
+      type: 'email',
+      label: 'Email',
+      index: true,
+      admin: {
+        description: 'Adresse email du participant pour l’envoi des résultats.',
+      },
+    },
+    {
       name: 'cseName',
       type: 'text',
-      label: 'Nom du CSE',
+      label: 'Entreprise / CSE',
       maxLength: CSE_NAME_MAX_LENGTH,
       index: true,
       admin: {
-        description:
-          'Saisie libre et facultative du joueur, en vue du classement par CSE (V2). Aucun nom de personne ne doit y figurer.',
+        description: 'Entreprise ou CSE renseigné par le participant.',
       },
     },
     {

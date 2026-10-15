@@ -17,11 +17,12 @@ import { colors, fonts, radius, surfaceBorder } from '@/theme/tokens'
 type Props = {
   quizId: number
   answers: number[]
+  resultId?: number | null
 }
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
-export function QuizEmailResultForm({ quizId, answers }: Props) {
+export function QuizEmailResultForm({ quizId, answers, resultId }: Props) {
   const [nom, setNom] = useState('')
   const [prenom, setPrenom] = useState('')
   const [email, setEmail] = useState('')
@@ -60,6 +61,7 @@ export function QuizEmailResultForm({ quizId, answers }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             quizId,
+            resultId,
             answers,
             nom: cleanNom,
             prenom: cleanPrenom,

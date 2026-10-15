@@ -18,6 +18,7 @@ import { Guides } from './collections/Guides'
 import { Quizzes } from './collections/Quizzes'
 import { QuizResults } from './collections/QuizResults'
 import { Providers } from './collections/Providers'
+import { ProviderSubscriptions } from './collections/ProviderSubscriptions'
 import { Testimonials } from './collections/Testimonials'
 import { Subscribers } from './collections/Subscribers'
 import { fr } from '@payloadcms/translations/languages/fr'
@@ -72,6 +73,7 @@ export default buildConfig({
     Quizzes,
     QuizResults,
     Providers,
+    ProviderSubscriptions,
     Testimonials,
     Subscribers,
   ],

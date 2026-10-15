@@ -47,7 +47,7 @@ export const Providers: CollectionConfig = {
   admin: {
     group: 'Contenus',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'category', 'published'],
+    defaultColumns: ['name', 'category', 'isSubscribed', 'published'],
     listSearchableFields: ['name', 'shortDescription'],
     description:
       'Annuaire des partenaires des élus. Une fiche n’apparaît sur le site qu’une fois cochée « Visible sur le site ».',
@@ -185,6 +185,18 @@ export const Providers: CollectionConfig = {
       ],
     },
     slugField('name'),
+    {
+      name: 'isSubscribed',
+      type: 'checkbox',
+      label: 'Prestataire abonné (Mise en avant)',
+      defaultValue: false,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Coché pour un prestataire abonné (payant). Sa fiche sera affichée en grand format dans la section « Prestataires abonnés » en tête de l’annuaire.',
+      },
+    },
     {
       name: 'published',
       type: 'checkbox',
