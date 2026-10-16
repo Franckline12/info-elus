@@ -51,3 +51,26 @@ export const formatSlugHook =
 
     return value
   }
+
+/**
+ * Variante pour les salons (Events) : un même salon revient chaque année sous
+ * le même titre (« Solutions CSE Paris » en 2026, puis en 2027…), mais le
+ * slug doit rester unique d'une édition à l'autre. La dérivation automatique
+ * ajoute donc l'année de la date de début — « Date de fin » n'est pas
+ * utilisée ici, un même salon ne commence jamais deux années différentes.
+ */
+export const formatEventSlugHook: FieldHook = ({ data, originalDoc, siblingData, value }) => {
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return formatSlug(value)
+  }
+
+  const title = siblingData?.title ?? data?.title ?? originalDoc?.title
+  if (typeof title !== 'string' || title.trim().length === 0) {
+    return value
+  }
+
+  const startDate = siblingData?.startDate ?? data?.startDate ?? originalDoc?.startDate
+  const year = startDate ? new Date(startDate).getFullYear() : undefined
+
+  return Number.isFinite(year) ? formatSlug(`${title}-${year}`) : formatSlug(title)
+}

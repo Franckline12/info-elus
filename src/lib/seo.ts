@@ -44,11 +44,25 @@ export type OgType = 'article' | 'website'
 /**
  * Métadonnées d'une page de contenu : champs SEO du CMS en priorité, repli sur
  * le titre, le résumé et l'image (§ 4.3).
+ *
+ * `fallbackDescription` : pour un contenu sans champ de résumé propre (les
+ * salons, décrits par leur ville, leurs dates et leur lieu plutôt qu'un chapô)
+ * — utilisé seulement si l'équipe éditoriale n'a rien saisi dans l'onglet SEO.
  */
-export function contentMetadata(doc: SeoContent, path: string, ogType: OgType = 'article'): Metadata {
+export function contentMetadata(
+  doc: SeoContent,
+  path: string,
+  ogType: OgType = 'article',
+  fallbackDescription?: string,
+): Metadata {
   const title = stripSiteSuffix(doc.meta?.title || doc.title || doc.name || '')
   const description =
-    doc.meta?.description || doc.excerpt || doc.summary || doc.shortDescription || undefined
+    doc.meta?.description ||
+    doc.excerpt ||
+    doc.summary ||
+    doc.shortDescription ||
+    fallbackDescription ||
+    undefined
   const image = asMedia(doc.meta?.image) ?? asMedia(doc.featuredImage) ?? asMedia(doc.logo)
   const url = absoluteUrl(path)
 

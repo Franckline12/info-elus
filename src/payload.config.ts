@@ -19,10 +19,13 @@ import { Quizzes } from './collections/Quizzes'
 import { QuizResults } from './collections/QuizResults'
 import { Providers } from './collections/Providers'
 import { ProviderSubscriptions } from './collections/ProviderSubscriptions'
+import { Organizers } from './collections/Organizers'
+import { Events } from './collections/Events'
 import { Testimonials } from './collections/Testimonials'
 import { Subscribers } from './collections/Subscribers'
 import { fr } from '@payloadcms/translations/languages/fr'
 import { emailAdapter } from './lib/email/adapter'
+import { eventSeoDescription } from './lib/events'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -30,7 +33,8 @@ const dirname = path.dirname(filename)
 /**
  * Forme commune aux contenus indexables : les articles portent un chapô
  * (`excerpt`), les guides un résumé court (`summary`), les quiz une
- * introduction (`intro`), les prestataires un nom et une description courte.
+ * introduction (`intro`), les prestataires un nom et une description courte,
+ * les salons une ville, un lieu et des dates.
  */
 type SeoDoc = {
   title?: string | null
@@ -39,20 +43,28 @@ type SeoDoc = {
   intro?: string | null
   name?: string | null
   shortDescription?: string | null
+  city?: string | null
+  venue?: string | null
+  startDate?: string | null
+  endDate?: string | null
 }
 
 /**
- * Les prestataires sont titrés « Nom — Prestataires — Infos Élus » : l'annuaire
- * est une rubrique à part, et le nom seul ne dirait pas assez de quoi il s'agit
- * dans une page de résultats.
+ * Les prestataires sont titrés « Nom — Prestataires — Infos Élus » et les
+ * salons « Titre — Salons CSE — Infos Élus » : ce sont des rubriques à part,
+ * et le titre seul ne dirait pas assez de quoi il s'agit dans une page de
+ * résultats.
  */
-const generateTitle: GenerateTitle<SeoDoc> = ({ collectionSlug, doc }) =>
-  collectionSlug === 'providers'
-    ? `${doc?.name ?? ''} — Prestataires — Infos Élus`
-    : `${doc?.title ?? ''} — Infos Élus`
+const generateTitle: GenerateTitle<SeoDoc> = ({ collectionSlug, doc }) => {
+  if (collectionSlug === 'providers') return `${doc?.name ?? ''} — Prestataires — Infos Élus`
+  if (collectionSlug === 'events') return `${doc?.title ?? ''} — Salons CSE — Infos Élus`
+  return `${doc?.title ?? ''} — Infos Élus`
+}
 
-const generateDescription: GenerateDescription<SeoDoc> = ({ doc }) =>
-  doc?.excerpt ?? doc?.summary ?? doc?.intro ?? doc?.shortDescription ?? ''
+const generateDescription: GenerateDescription<SeoDoc> = ({ collectionSlug, doc }) => {
+  if (collectionSlug === 'events' && doc) return eventSeoDescription(doc)
+  return doc?.excerpt ?? doc?.summary ?? doc?.intro ?? doc?.shortDescription ?? ''
+}
 
 export default buildConfig({
   admin: {
@@ -74,6 +86,8 @@ export default buildConfig({
     QuizResults,
     Providers,
     ProviderSubscriptions,
+    Organizers,
+    Events,
     Testimonials,
     Subscribers,
   ],
@@ -91,7 +105,7 @@ export default buildConfig({
   sharp,
   plugins: [
     seoPlugin({
-      collections: ['articles', 'guides', 'quizzes', 'providers'],
+      collections: ['articles', 'guides', 'quizzes', 'providers', 'events'],
       tabbedUI: true,
       uploadsCollection: 'media',
       generateTitle,

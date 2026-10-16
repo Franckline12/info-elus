@@ -79,6 +79,8 @@ export interface Config {
     'quiz-results': QuizResult;
     providers: Provider;
     'provider-subscriptions': ProviderSubscription;
+    organizers: Organizer;
+    events: Event;
     testimonials: Testimonial;
     subscribers: Subscriber;
     'payload-kv': PayloadKv;
@@ -100,6 +102,8 @@ export interface Config {
     'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
     'provider-subscriptions': ProviderSubscriptionsSelect<false> | ProviderSubscriptionsSelect<true>;
+    organizers: OrganizersSelect<false> | OrganizersSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -698,6 +702,128 @@ export interface ProviderSubscription {
   createdAt: string;
 }
 /**
+ * Les organisateurs de salons CSE. Alimentent le champ « Organisateur » des salons et le filtre de la page Salons.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizers".
+ */
+export interface Organizer {
+  id: number;
+  name: string;
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * URL complète, avec https://
+   */
+  website?: string | null;
+  /**
+   * Facultatif, à usage interne : n’apparaît pas sur le site.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Salons professionnels pour élus de CSE. Triés par date de début croissante : les prochains salons en tête, pour que l’équipe voie immédiatement ce qui approche.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  /**
+   * Le nom du salon, par exemple « Solutions CSE Paris ».
+   */
+  title: string;
+  /**
+   * Les organisateurs se gèrent dans Taxonomies › Organisateurs.
+   */
+  organizer: number | Organizer;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  featuredImage?: (number | null) | Media;
+  startDate: string;
+  /**
+   * Pour un salon d’une seule journée, la même date que le début.
+   */
+  endDate: string;
+  city: string;
+  /**
+   * Le site qui accueille le salon, par exemple « Parc des Princes ».
+   */
+  venue: string;
+  address?: string | null;
+  /**
+   * Sert au filtre géographique de la page Salons.
+   */
+  region:
+    | 'auvergne-rhone-alpes'
+    | 'bourgogne-franche-comte'
+    | 'bretagne'
+    | 'centre-val-de-loire'
+    | 'corse'
+    | 'grand-est'
+    | 'hauts-de-france'
+    | 'ile-de-france'
+    | 'normandie'
+    | 'nouvelle-aquitaine'
+    | 'occitanie'
+    | 'pays-de-la-loire'
+    | 'provence-alpes-cote-d-azur'
+    | 'guadeloupe'
+    | 'guyane'
+    | 'martinique'
+    | 'la-reunion'
+    | 'mayotte';
+  /**
+   * URL complète, avec https://
+   */
+  registrationUrl?: string | null;
+  isFree?: boolean | null;
+  /**
+   * Facultatif, indiqué par l’organisateur.
+   */
+  exhibitorCount?: number | null;
+  hasConferences?: boolean | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * Généré automatiquement depuis le titre et l’année de la date de début (un même salon revient chaque année). Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * À mettre à jour chaque fois que les dates et le lieu sont revérifiés auprès de l’organisateur. Une information de salon périmée est pire que pas d’information : sans vérification récente, mieux vaut dépublier.
+   */
+  lastVerifiedAt?: string | null;
+  /**
+   * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le salon n’apparaît pas sur le site public.
+   */
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "testimonials".
  */
@@ -822,6 +948,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'provider-subscriptions';
         value: number | ProviderSubscription;
+      } | null)
+    | ({
+        relationTo: 'organizers';
+        value: number | Organizer;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null)
     | ({
         relationTo: 'testimonials';
@@ -1165,6 +1299,50 @@ export interface ProviderSubscriptionsSelect<T extends boolean = true> {
   email?: T;
   status?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizers_select".
+ */
+export interface OrganizersSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  website?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  organizer?: T;
+  description?: T;
+  featuredImage?: T;
+  startDate?: T;
+  endDate?: T;
+  city?: T;
+  venue?: T;
+  address?: T;
+  region?: T;
+  registrationUrl?: T;
+  isFree?: T;
+  exhibitorCount?: T;
+  hasConferences?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  slug?: T;
+  lastVerifiedAt?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
 }

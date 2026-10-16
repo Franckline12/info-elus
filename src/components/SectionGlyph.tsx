@@ -1,4 +1,5 @@
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined'
 import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined'
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined'
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'
@@ -18,6 +19,7 @@ const ICONS: Record<SectionIcon, React.ComponentType<SvgIconProps>> = {
   guides: MenuBookOutlinedIcon,
   quiz: ExtensionOutlinedIcon,
   providers: HandshakeOutlinedIcon,
+  events: EventOutlinedIcon,
 }
 
 type Props = SvgIconProps & {
