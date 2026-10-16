@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
 
 import AppLink from '@/components/AppLink'
 import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
-import EventRow from '@/components/event/EventRow'
-import FilterLinks from '@/components/FilterLinks'
+import EventFilterPanel from '@/components/event/EventFilterPanel'
+import EventRow, { eventListSx } from '@/components/event/EventRow'
 import PageHero from '@/components/PageHero'
 import PaginationLinks from '@/components/PaginationLinks'
 import SectionHeading from '@/components/SectionHeading'
@@ -20,9 +21,11 @@ import {
 } from '@/lib/queries/events'
 import { getOrganizers } from '@/lib/queries/organizers'
 import { eventsPagePath, eventsPath, parsePage } from '@/lib/routes'
-import { rule } from '@/theme/tokens'
+import { radius, rule, surfaceBorder } from '@/theme/tokens'
 
 const PAST_PER_PAGE = 10
+/** Au-delà de ce nombre, les régions restantes se replient sous « +N » (maquette § 8). */
+const REGION_FILTERS_VISIBLE = 5
 
 const DESCRIPTION =
   'Les salons professionnels destinés aux élus de CSE et aux représentants du personnel : dates, ' +
@@ -85,50 +88,108 @@ export default async function EventsPage({ searchParams }: Props) {
         {INTRO}
       </Typography>
 
-      <Box
-        role="search"
-        aria-label="Filtrer les salons"
-        sx={{ mt: { xs: 3, md: 4 }, display: 'grid', gap: { xs: 1.5, md: 2 } }}
-      >
-        <FilterLinks
-          label="Filtrer par organisateur"
-          items={[
+      <Box sx={{ mt: { xs: 3, md: 4 } }}>
+        <EventFilterPanel
+          groups={[
             {
-              key: 'all',
-              label: 'Tous les organisateurs',
-              href: eventsPagePath({ region }),
-              active: !organizerSlug,
+              label: 'Organisateurs',
+              items: [
+                {
+                  key: 'all',
+                  label: 'Tous les organisateurs',
+                  href: eventsPagePath({ region }),
+                  active: !organizerSlug,
+                },
+                ...organizerCounts.map((organizer) => ({
+                  key: organizer.value,
+                  label: `${organizer.label} (${organizer.count ?? 0})`,
+                  href: eventsPagePath({ organizerSlug: organizer.value, region }),
+                  active: organizer.value === organizerSlug,
+                })),
+              ],
             },
-            ...organizerCounts.map((organizer) => ({
-              key: organizer.value,
-              label: `${organizer.label} (${organizer.count ?? 0})`,
-              href: eventsPagePath({ organizerSlug: organizer.value, region }),
-              active: organizer.value === organizerSlug,
-            })),
-          ]}
-        />
-
-        <FilterLinks
-          label="Filtrer par région"
-          items={[
             {
-              key: 'all',
-              label: 'Toutes les régions',
-              href: eventsPagePath({ organizerSlug }),
-              active: !region,
+              label: 'Régions',
+              items: [
+                {
+                  key: 'all',
+                  label: 'Toutes les régions',
+                  href: eventsPagePath({ organizerSlug }),
+                  active: !region,
+                },
+                ...regionCounts.map((item) => ({
+                  key: item.value,
+                  label: `${item.label} (${item.count ?? 0})`,
+                  href: eventsPagePath({ organizerSlug, region: item.value }),
+                  active: item.value === region,
+                })),
+              ],
+              maxVisible: REGION_FILTERS_VISIBLE,
             },
-            ...regionCounts.map((item) => ({
-              key: item.value,
-              label: `${item.label} (${item.count ?? 0})`,
-              href: eventsPagePath({ organizerSlug, region: item.value }),
-              active: item.value === region,
-            })),
           ]}
         />
       </Box>
 
       <Box component="section" aria-labelledby="prochains-salons" sx={{ mt: { xs: 4, md: 5 } }}>
-        <SectionHeading id="prochains-salons" title="Prochains salons" />
+        <Box
+          sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: { xs: 'flex-start', sm: 'flex-end' },
+            justifyContent: 'space-between',
+            gap: 2,
+            mb: { xs: 2, md: 2.5 },
+          }}
+        >
+          <Box>
+            <Typography
+              id="prochains-salons"
+              component="h2"
+              variant="h3"
+              sx={{ fontSize: { xs: '1.25rem', md: '1.375rem' }, letterSpacing: '-0.01em', m: 0 }}
+            >
+              Prochains salons
+            </Typography>
+
+            <Typography
+              component="p"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                mt: 0.5,
+                mb: 0,
+                fontSize: '0.875rem',
+                color: 'text.secondary',
+              }}
+            >
+              <CalendarMonthOutlinedIcon aria-hidden sx={{ fontSize: '1.05em' }} />
+              {upcoming.length} résultat{upcoming.length > 1 ? 's' : ''}
+            </Typography>
+          </Box>
+
+          {upcoming.length > 0 ? (
+            <Box
+              aria-hidden
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.75,
+                flexShrink: 0,
+                px: 1.5,
+                py: 0.875,
+                border: `1px solid ${surfaceBorder}`,
+                borderRadius: `${radius}px`,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'text.secondary',
+              }}
+            >
+              <CalendarMonthOutlinedIcon aria-hidden sx={{ fontSize: '1.05em' }} />
+              Triés par date (du plus proche)
+            </Box>
+          ) : null}
+        </Box>
 
         {upcoming.length === 0 ? (
           <EmptyState
@@ -141,21 +202,18 @@ export default async function EventsPage({ searchParams }: Props) {
           />
         ) : (
           groups.map((group) => (
-            <Box key={group.label} sx={{ mt: { xs: 2.5, md: 3 }, '&:first-of-type': { mt: 0 } }}>
+            <Box key={group.label} sx={{ mt: { xs: 3, md: 3.5 }, '&:first-of-type': { mt: 0 } }}>
               <Typography
                 component="h3"
                 variant="overline"
-                sx={{ display: 'block', color: 'text.secondary', mb: 0.5 }}
+                sx={{ display: 'block', color: 'text.secondary', mb: 1 }}
               >
                 {group.label}
               </Typography>
 
-              <Box
-                component="ul"
-                sx={{ listStyle: 'none', m: 0, p: 0, borderTop: `1px solid ${rule}` }}
-              >
+              <Box component="ul" sx={eventListSx}>
                 {group.events.map((event) => (
-                  <Box component="li" key={event.id} sx={{ borderBottom: `1px solid ${rule}` }}>
+                  <Box component="li" key={event.id}>
                     <EventRow event={event} />
                   </Box>
                 ))}
@@ -193,9 +251,9 @@ export default async function EventsPage({ searchParams }: Props) {
             />
           )
         ) : (
-          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, borderTop: `1px solid ${rule}` }}>
+          <Box component="ul" sx={eventListSx}>
             {past.docs.map((event) => (
-              <Box component="li" key={event.id} sx={{ borderBottom: `1px solid ${rule}` }}>
+              <Box component="li" key={event.id}>
                 <EventRow event={event} past />
               </Box>
             ))}

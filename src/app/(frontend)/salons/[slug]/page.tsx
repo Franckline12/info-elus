@@ -217,9 +217,14 @@ export default async function EventPage({ params }: Props) {
         >
           <SectionHeading id="autres-salons" title="Autres salons à venir" />
 
-          <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0, borderTop: `1px solid ${rule}` }}>
+          {/* Toujours une seule colonne : le conteneur `narrow` (760 px max) de
+              cette page ne laisse jamais la place à deux cartes côte à côte. */}
+          <Box
+            component="ul"
+            sx={{ listStyle: 'none', m: 0, p: 0, display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2 } }}
+          >
             {related.map((item) => (
-              <Box component="li" key={item.id} sx={{ borderBottom: `1px solid ${rule}` }}>
+              <Box component="li" key={item.id}>
                 <EventRow event={item} />
               </Box>
             ))}

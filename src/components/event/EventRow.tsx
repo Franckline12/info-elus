@@ -2,8 +2,10 @@ import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Typography from '@mui/material/Typography'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 
 import AppLink from '@/components/AppLink'
 import CategoryLabel from '@/components/CategoryLabel'
@@ -11,7 +13,7 @@ import VisuallyHidden from '@/components/VisuallyHidden'
 import { eventOrganizer } from '@/lib/organizers'
 import { eventOrganizerPath, eventPath } from '@/lib/routes'
 import type { Event } from '@/payload-types'
-import { colors } from '@/theme/tokens'
+import { colors, radius, surfaceBorder } from '@/theme/tokens'
 
 import EventDateBadge from './EventDateBadge'
 
@@ -22,8 +24,23 @@ type Props = {
 }
 
 /**
- * Une ligne de la liste des salons (§ 8), sur le modèle de `ProviderRow` :
- * filets plutôt que cartes, survol en changement de fond uniquement.
+ * Style de la liste des cartes `EventRow` : deux colonnes à partir de la
+ * tablette, pour éviter le grand vide central d'une carte en pleine largeur.
+ */
+export const eventListSx = {
+  listStyle: 'none',
+  m: 0,
+  p: 0,
+  display: 'grid',
+  // Une seule colonne jusqu'à `lg` : en dessous, une carte est trop étroite
+  // pour garder la date, le contenu et le bouton d'inscription sur une ligne.
+  gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' },
+  gap: { xs: 1.5, md: 2 },
+} as const
+
+/**
+ * Une ligne de la liste des salons (§ 8) : carte bordée, sur le modèle de la
+ * maquette de référence (date mise en avant, bouton d'inscription en pilule).
  */
 export function EventRow({ event, past = false }: Props) {
   const href = eventPath(event)
@@ -36,13 +53,15 @@ export function EventRow({ event, past = false }: Props) {
         display: 'grid',
         gridTemplateColumns: { xs: 'auto 1fr', sm: 'auto 1fr auto' },
         columnGap: { xs: 2, sm: 3 },
-        rowGap: 1,
+        rowGap: 1.5,
         alignItems: { xs: 'start', sm: 'center' },
-        py: { xs: 2.5, md: 3 },
-        px: { xs: 0, md: 1 },
+        p: { xs: 2, md: 2.5 },
+        border: `1px solid ${surfaceBorder}`,
+        borderRadius: `${radius}px`,
+        backgroundColor: colors.paperRaised,
         opacity: past ? 0.8 : 1,
-        transition: 'background-color 160ms ease',
-        '&:hover': { backgroundColor: colors.paperRaised },
+        transition: 'border-color 160ms ease',
+        '&:hover': { borderColor: colors.blueBright },
         '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
       }}
     >
@@ -82,7 +101,11 @@ export function EventRow({ event, past = false }: Props) {
           ) : null}
         </Box>
 
-        <Typography variant="body2" sx={{ color: 'text.secondary', m: 0 }}>
+        <Typography
+          variant="body2"
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary', m: 0 }}
+        >
+          <LocationOnOutlinedIcon aria-hidden sx={{ fontSize: '0.95em', opacity: 0.8 }} />
           {event.city} — {event.venue}
         </Typography>
 
@@ -111,19 +134,27 @@ export function EventRow({ event, past = false }: Props) {
             href={event.registrationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            underline="hover"
+            underline="none"
             sx={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 0.5,
+              gap: 0.75,
               flexShrink: 0,
+              px: 1.75,
+              py: 0.875,
+              border: `1px solid ${colors.blueBright}`,
+              borderRadius: `${radius}px`,
               fontSize: '0.875rem',
               fontWeight: 500,
               color: colors.blueBright,
+              transition: 'background-color 160ms ease, color 160ms ease',
+              '&:hover': { backgroundColor: colors.blueBright, color: '#FFFFFF' },
+              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
             }}
           >
+            <CalendarMonthOutlinedIcon aria-hidden sx={{ fontSize: '1.05em' }} />
             S’inscrire
-            <OpenInNewIcon aria-hidden sx={{ fontSize: '0.875em' }} />
+            <ChevronRightIcon aria-hidden sx={{ fontSize: '1.05em' }} />
             <VisuallyHidden>(site externe, s’ouvre dans un nouvel onglet)</VisuallyHidden>
           </AppLink>
         </Box>

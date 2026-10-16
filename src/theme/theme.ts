@@ -86,7 +86,7 @@ export const theme = createTheme({
       contrastText: '#FFFFFF',
     },
     background: {
-      default: colors.paper,
+      default: colors.pageBackground,
       paper: colors.paperRaised,
     },
     text: {
@@ -192,7 +192,7 @@ export const theme = createTheme({
           colorScheme: 'light',
         },
         body: {
-          backgroundColor: colors.paper,
+          backgroundColor: colors.pageBackground,
           color: colors.ink,
         },
         // Focus clavier visible partout, y compris sur les éléments natifs
