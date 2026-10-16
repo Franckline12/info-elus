@@ -7,6 +7,7 @@ import { ensureSingleFeaturedNews } from '../hooks/ensureSingleFeaturedNews'
 import { populatePublishedAt } from '../hooks/populatePublishedAt'
 import { revalidateArticle, revalidateArticleDelete } from '../hooks/revalidateArticle'
 import { setReadingTime } from '../hooks/setReadingTime'
+import { minImageWidth } from '../lib/media/minImageWidth'
 
 /**
  * Articles de fond et actualité : même modèle de données, seul le champ `type`
@@ -55,6 +56,11 @@ export const Articles: CollectionConfig = {
               type: 'text',
               label: 'Titre',
               required: true,
+              maxLength: 120,
+              admin: {
+                description:
+                  'Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.',
+              },
             },
             {
               name: 'excerpt',
@@ -72,8 +78,10 @@ export const Articles: CollectionConfig = {
               type: 'upload',
               label: 'Image mise en avant',
               relationTo: 'media',
+              validate: minImageWidth(1200),
               admin: {
-                description: 'Illustration de tête, reprise dans les listes et l’aperçu social.',
+                description:
+                  'Illustration de tête, reprise dans les listes et l’aperçu social. 1200px de large minimum (affichage en grand format).',
               },
             },
             {

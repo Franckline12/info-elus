@@ -96,6 +96,20 @@ export default buildConfig({
       uploadsCollection: 'media',
       generateTitle,
       generateDescription,
+      // 60 et 160 caractères sont les seuils d'affichage de Google : le plugin
+      // applique ces valeurs à la fois à la validation du champ et à son
+      // indicateur de longueur natif (`MetaTitleComponent`/`MetaDescriptionComponent`
+      // lisent `field.maxLength`), donc pas de second indicateur à construire.
+      fields: ({ defaultFields }) =>
+        defaultFields.map((field) => {
+          if ('name' in field && field.name === 'title') {
+            return { ...field, maxLength: 60 }
+          }
+          if ('name' in field && field.name === 'description') {
+            return { ...field, maxLength: 160 }
+          }
+          return field
+        }),
     }),
   ],
   i18n: {

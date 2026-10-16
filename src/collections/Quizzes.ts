@@ -62,6 +62,11 @@ export const Quizzes: CollectionConfig = {
               type: 'text',
               label: 'Titre',
               required: true,
+              maxLength: 120,
+              admin: {
+                description:
+                  'Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.',
+              },
             },
             {
               name: 'intro',
@@ -139,6 +144,10 @@ export const Quizzes: CollectionConfig = {
                   type: 'textarea',
                   label: 'Énoncé',
                   required: true,
+                  maxLength: 300,
+                  admin: {
+                    description: '300 caractères maximum.',
+                  },
                 },
                 {
                   name: 'options',
@@ -157,6 +166,10 @@ export const Quizzes: CollectionConfig = {
                       type: 'text',
                       label: 'Intitulé',
                       required: true,
+                      maxLength: 150,
+                      admin: {
+                        description: '150 caractères maximum.',
+                      },
                     },
                     {
                       name: 'isCorrect',
@@ -170,9 +183,10 @@ export const Quizzes: CollectionConfig = {
                   name: 'explanation',
                   type: 'textarea',
                   label: 'Explication',
+                  maxLength: 500,
                   admin: {
                     description:
-                      'Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz.',
+                      'Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz. 500 caractères maximum.',
                   },
                 },
                 {

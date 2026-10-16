@@ -173,6 +173,9 @@ export interface User {
  */
 export interface Media {
   id: number;
+  /**
+   * Décrit l’image pour les lecteurs d’écran et les moteurs de recherche. 150 caractères maximum.
+   */
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -185,6 +188,40 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    og?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -192,11 +229,17 @@ export interface Media {
  */
 export interface Category {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
+  /**
+   * 200 caractères maximum.
+   */
   description?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -207,6 +250,9 @@ export interface Category {
  */
 export interface Theme {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
@@ -225,6 +271,9 @@ export interface Theme {
  */
 export interface Tag {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
@@ -259,13 +308,16 @@ export interface ProviderCategory {
  */
 export interface Article {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Résumé d’accroche affiché sous le titre, dans les listes et les partages. 300 caractères maximum.
    */
   excerpt: string;
   /**
-   * Illustration de tête, reprise dans les listes et l’aperçu social.
+   * Illustration de tête, reprise dans les listes et l’aperçu social. 1200px de large minimum (affichage en grand format).
    */
   featuredImage?: (number | null) | Media;
   content: {
@@ -324,19 +376,25 @@ export interface Article {
  */
 export interface Guide {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Affiché sous le titre, dans le listing et dans le rail de l’accueil. 300 caractères maximum.
    */
   summary: string;
   /**
-   * Illustration de tête, reprise dans l’aperçu social.
+   * Illustration de tête, reprise dans l’aperçu social. 1200px de large minimum (affichage en grand format).
    */
   featuredImage?: (number | null) | Media;
   /**
    * Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.
    */
   sections: {
+    /**
+     * 100 caractères maximum : il alimente le sommaire interne du guide.
+     */
     heading: string;
     /**
      * Dérivée du titre de la section, rendue unique automatiquement. Elle sert de lien dans le sommaire.
@@ -408,6 +466,9 @@ export interface Guide {
  */
 export interface Quiz {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Phrase d’accroche affichée avant de lancer le quiz et reprise dans la vignette du listing. 300 caractères maximum.
@@ -425,14 +486,20 @@ export interface Quiz {
    * Chaque question doit compter au moins deux réponses proposées et une seule réponse correcte.
    */
   questions: {
+    /**
+     * 300 caractères maximum.
+     */
     prompt: string;
     options: {
+      /**
+       * 150 caractères maximum.
+       */
       text: string;
       isCorrect?: boolean | null;
       id?: string | null;
     }[];
     /**
-     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz.
+     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz. 500 caractères maximum.
      */
     explanation?: string | null;
     /**
@@ -506,6 +573,9 @@ export interface QuizResult {
  */
 export interface Provider {
   id: number;
+  /**
+   * 100 caractères maximum.
+   */
   name: string;
   /**
    * Facultatif : à défaut, l’annuaire affiche les initiales du prestataire.
@@ -568,7 +638,7 @@ export interface Provider {
    */
   contact?: {
     /**
-     * Facultatif : la personne à joindre chez le prestataire.
+     * Facultatif : la personne à joindre chez le prestataire. 80 caractères maximum.
      */
     contactName?: string | null;
     email?: string | null;
@@ -843,6 +913,50 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        og?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

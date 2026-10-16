@@ -79,6 +79,10 @@ export const Providers: CollectionConfig = {
               type: 'text',
               label: 'Nom',
               required: true,
+              maxLength: 100,
+              admin: {
+                description: '100 caractères maximum.',
+              },
             },
             {
               name: 'logo',
@@ -155,8 +159,10 @@ export const Providers: CollectionConfig = {
                   name: 'contactName',
                   type: 'text',
                   label: 'Nom du contact',
+                  maxLength: 80,
                   admin: {
-                    description: 'Facultatif : la personne à joindre chez le prestataire.',
+                    description:
+                      'Facultatif : la personne à joindre chez le prestataire. 80 caractères maximum.',
                   },
                 },
                 {

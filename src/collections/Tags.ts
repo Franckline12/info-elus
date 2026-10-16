@@ -26,6 +26,10 @@ export const Tags: CollectionConfig = {
       type: 'text',
       label: 'Nom',
       required: true,
+      maxLength: 60,
+      admin: {
+        description: '60 caractères maximum.',
+      },
     },
     slugField('name'),
   ],
