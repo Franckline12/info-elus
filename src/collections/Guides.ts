@@ -6,6 +6,7 @@ import { slugField } from '../fields/slug'
 import { populatePublishedAt } from '../hooks/populatePublishedAt'
 import { revalidateContent } from '../hooks/revalidateContent'
 import { uniqueSectionAnchors } from '../hooks/sectionAnchors'
+import { minImageWidth } from '../lib/media/minImageWidth'
 
 const { afterChange, afterDelete } = revalidateContent('/guides')
 
@@ -63,6 +64,11 @@ export const Guides: CollectionConfig = {
               type: 'text',
               label: 'Titre',
               required: true,
+              maxLength: 120,
+              admin: {
+                description:
+                  'Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.',
+              },
             },
             {
               name: 'summary',
@@ -80,8 +86,10 @@ export const Guides: CollectionConfig = {
               type: 'upload',
               label: 'Image mise en avant',
               relationTo: 'media',
+              validate: minImageWidth(1200),
               admin: {
-                description: 'Illustration de tête, reprise dans l’aperçu social.',
+                description:
+                  'Illustration de tête, reprise dans l’aperçu social. 1200px de large minimum (affichage en grand format).',
               },
             },
             {
@@ -111,6 +119,10 @@ export const Guides: CollectionConfig = {
                   type: 'text',
                   label: 'Titre de la section',
                   required: true,
+                  maxLength: 100,
+                  admin: {
+                    description: '100 caractères maximum : il alimente le sommaire interne du guide.',
+                  },
                 },
                 {
                   name: 'anchor',
