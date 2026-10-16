@@ -13,6 +13,7 @@ export const listingLabel = (type: ContentType): string =>
 export const guidesPath = '/guides'
 export const quizzesPath = '/jeux-quiz'
 export const providersPath = '/prestataires'
+export const eventsPath = '/salons'
 export const searchPath = '/recherche'
 
 export const guidePath = (guide: { slug?: string | null }): string =>
@@ -23,6 +24,9 @@ export const quizPath = (quiz: { slug?: string | null }): string =>
 
 export const providerPath = (provider: { slug?: string | null }): string =>
   `${providersPath}/${provider.slug ?? ''}`
+
+export const eventPath = (event: { slug?: string | null }): string =>
+  `${eventsPath}/${event.slug ?? ''}`
 
 /** Listing des guides filtré sur un thème. */
 export const themePath = (slug: string): string => `${guidesPath}?theme=${encodeURIComponent(slug)}`
@@ -89,6 +93,25 @@ export const providersPagePath = ({ page, categorySlug, area }: ProviderFilters 
 /** Listing de l'annuaire filtré sur une seule catégorie. */
 export const providerCategoryPath = (value: string): string =>
   providersPagePath({ categorySlug: value })
+
+export type EventFilters = {
+  /** Pagination de la section « Éditions passées » ; la liste à venir n'est jamais paginée. */
+  page?: number
+  organizerSlug?: string
+  /** Région, valeur de `eventRegionOptions`. */
+  region?: string
+}
+
+/**
+ * URL de la page Salons : organisateur, région et page voyagent ensemble. Les
+ * deux filtres ne portent que sur les salons à venir (§ 8) ; `page`, lui, ne
+ * s'applique qu'aux éditions passées, en bas de la même page.
+ */
+export const eventsPagePath = ({ page, organizerSlug, region }: EventFilters = {}): string =>
+  pagePath(eventsPath, page, { organisateur: organizerSlug, region })
+
+/** Listing filtré sur un seul organisateur de salons. */
+export const eventOrganizerPath = (value: string): string => eventsPagePath({ organizerSlug: value })
 
 /** Construit l'URL d'une page de listing d'articles en conservant les filtres actifs. */
 export const listingPagePath = (

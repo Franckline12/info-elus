@@ -2,6 +2,7 @@ import { getPayload } from 'payload'
 
 import config from '../payload.config'
 import { seedDrafts } from './drafts'
+import { seedEvents } from './events'
 import { seedGuides } from './guides'
 import { seedNews } from './news'
 import { seedProviders } from './providers'
@@ -28,6 +29,9 @@ const seed = async () => {
 
   payload.logger.info('Seed : prestataires')
   await seedProviders(payload)
+
+  payload.logger.info('Seed : salons')
+  await seedEvents(payload)
 
   payload.logger.info('Seed : témoignages')
   await seedTestimonials(payload)

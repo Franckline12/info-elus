@@ -26,12 +26,20 @@ export const Categories: CollectionConfig = {
       type: 'text',
       label: 'Nom',
       required: true,
+      maxLength: 60,
+      admin: {
+        description: '60 caractères maximum.',
+      },
     },
     slugField('name'),
     {
       name: 'description',
       type: 'textarea',
       label: 'Description',
+      maxLength: 200,
+      admin: {
+        description: '200 caractères maximum.',
+      },
     },
   ],
 }

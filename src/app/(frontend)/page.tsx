@@ -8,6 +8,7 @@ import Container from '@/components/Container'
 import EmptyState from '@/components/EmptyState'
 import GuideCard from '@/components/guide/GuideCard'
 import GuideRail from '@/components/guide/GuideRail'
+import NextEventStrip from '@/components/event/NextEventStrip'
 import HomeHero from '@/components/home/HomeHero'
 import SectionShortcuts from '@/components/home/SectionShortcuts'
 import TestimonialCard from '@/components/home/TestimonialCard'
@@ -22,6 +23,7 @@ import {
   getFeaturedOnHome,
   getLatestNews,
 } from '@/lib/queries/articles'
+import { getNextEvent } from '@/lib/queries/events'
 import { getGuidesForHome } from '@/lib/queries/guides'
 import { getQuizStats } from '@/lib/queries/quizStats'
 import { getCurrentQuiz } from '@/lib/queries/quizzes'
@@ -33,14 +35,16 @@ import { siteName, siteTagline } from '@/lib/site'
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const [featured, guides, testimonial, currentQuiz, quizStats, featuredNews] = await Promise.all([
-    getFeaturedOnHome(1),
-    getGuidesForHome(8),
-    getTestimonial(),
-    getCurrentQuiz(),
-    getQuizStats(),
-    getFeaturedNews(),
-  ])
+  const [featured, guides, testimonial, currentQuiz, quizStats, featuredNews, nextEvent] =
+    await Promise.all([
+      getFeaturedOnHome(1),
+      getGuidesForHome(8),
+      getTestimonial(),
+      getCurrentQuiz(),
+      getQuizStats(),
+      getFeaturedNews(),
+      getNextEvent(),
+    ])
 
   // Le bandeau reprend l'article coché « À la une » ; sans cochage, le plus
   // récent fait l'ouverture — aucun contenu n'est fabriqué pour combler le vide.
@@ -77,6 +81,12 @@ export default async function HomePage() {
       <Box sx={{ mt: { xs: 3, md: 4 } }}>
         <SectionShortcuts />
       </Box>
+
+      {nextEvent ? (
+        <Box sx={{ mt: { xs: 3, md: 4 } }}>
+          <NextEventStrip event={nextEvent} />
+        </Box>
+      ) : null}
 
       {featuredNews ? (
         <Box component="section" aria-labelledby="actualite" sx={{ mt: { xs: 5, md: 6 } }}>

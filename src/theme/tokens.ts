@@ -8,6 +8,8 @@
 export const colors = {
   paper: '#F3F0E6',
   paperRaised: '#FBFAF4',
+  /** Fond de page : blanc, sur demande du client (remplace le papier crème par défaut). */
+  pageBackground: '#FFFFFF',
   ink: '#10152B',
   textSecondary: '#565C78',
   blueDeep: '#12193B',

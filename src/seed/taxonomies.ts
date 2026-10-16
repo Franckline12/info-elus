@@ -1,6 +1,6 @@
 import type { Payload } from 'payload'
 
-import type { Theme } from '../payload-types'
+import type { Organizer, Theme } from '../payload-types'
 
 export type SeedTheme = {
   slug: string
@@ -149,6 +149,69 @@ export const ensureProviderCategories = async (
     })
     payload.logger.info(`Catégorie de prestataire créée : ${category.name}`)
     map.set(category.slug, created.id)
+  }
+
+  return map
+}
+
+export type SeedOrganizer = SeedTaxonomy & {
+  website?: string
+  description?: string
+}
+
+/**
+ * Organisateurs de salons CSE (rubrique Salons, § 8). Deux maisons à la date
+ * de rédaction : la liste reste volontairement courte à seeder en dur plutôt
+ * qu'exhaustive, l'équipe éditoriale en ajoutant d'autres au fil des besoins.
+ */
+export const ORGANIZERS: SeedOrganizer[] = [
+  {
+    slug: 'solutionscse',
+    name: 'SolutionsCSE',
+    website: 'https://www.solutions-cse.org',
+    description:
+      'Organise les salons Solutions CSE à travers la France, sous l’enseigne du groupe Comexposium.',
+  },
+  {
+    slug: 'eluceo',
+    name: 'Eluceo',
+    website: 'https://www.eluceo.fr',
+    description: 'Organise les salons Le Salon CSE dans plusieurs villes de France.',
+  },
+]
+
+/** Même contrat que `ensureCategories`, pour les organisateurs de salons. */
+export const ensureOrganizers = async (
+  payload: Payload,
+  organizers: SeedOrganizer[] = ORGANIZERS,
+): Promise<Map<string, number>> => {
+  const map = new Map<string, number>()
+
+  for (const organizer of organizers) {
+    const { docs } = await payload.find({
+      collection: 'organizers',
+      where: { slug: { equals: organizer.slug } },
+      limit: 1,
+      depth: 0,
+    })
+
+    const existing = docs[0]
+    if (existing) {
+      map.set(organizer.slug, existing.id)
+      continue
+    }
+
+    const created: Organizer = await payload.create({
+      collection: 'organizers',
+      data: {
+        name: organizer.name,
+        slug: organizer.slug,
+        website: organizer.website,
+        description: organizer.description,
+      },
+    })
+    payload.logger.info(`Organisateur créé : ${organizer.name}`)
+    map.set(organizer.slug, created.id)
   }
 
   return map

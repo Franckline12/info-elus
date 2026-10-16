@@ -79,6 +79,8 @@ export interface Config {
     'quiz-results': QuizResult;
     providers: Provider;
     'provider-subscriptions': ProviderSubscription;
+    organizers: Organizer;
+    events: Event;
     testimonials: Testimonial;
     subscribers: Subscriber;
     'payload-kv': PayloadKv;
@@ -100,6 +102,8 @@ export interface Config {
     'quiz-results': QuizResultsSelect<false> | QuizResultsSelect<true>;
     providers: ProvidersSelect<false> | ProvidersSelect<true>;
     'provider-subscriptions': ProviderSubscriptionsSelect<false> | ProviderSubscriptionsSelect<true>;
+    organizers: OrganizersSelect<false> | OrganizersSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     testimonials: TestimonialsSelect<false> | TestimonialsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -173,6 +177,9 @@ export interface User {
  */
 export interface Media {
   id: number;
+  /**
+   * Décrit l’image pour les lecteurs d’écran et les moteurs de recherche. 150 caractères maximum.
+   */
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -185,6 +192,40 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    og?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -192,11 +233,17 @@ export interface Media {
  */
 export interface Category {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
    */
   slug?: string | null;
+  /**
+   * 200 caractères maximum.
+   */
   description?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -207,6 +254,9 @@ export interface Category {
  */
 export interface Theme {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
@@ -225,6 +275,9 @@ export interface Theme {
  */
 export interface Tag {
   id: number;
+  /**
+   * 60 caractères maximum.
+   */
   name: string;
   /**
    * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
@@ -259,13 +312,16 @@ export interface ProviderCategory {
  */
 export interface Article {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Résumé d’accroche affiché sous le titre, dans les listes et les partages. 300 caractères maximum.
    */
   excerpt: string;
   /**
-   * Illustration de tête, reprise dans les listes et l’aperçu social.
+   * Illustration de tête, reprise dans les listes et l’aperçu social. 1200px de large minimum (affichage en grand format).
    */
   featuredImage?: (number | null) | Media;
   content: {
@@ -324,19 +380,25 @@ export interface Article {
  */
 export interface Guide {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Affiché sous le titre, dans le listing et dans le rail de l’accueil. 300 caractères maximum.
    */
   summary: string;
   /**
-   * Illustration de tête, reprise dans l’aperçu social.
+   * Illustration de tête, reprise dans l’aperçu social. 1200px de large minimum (affichage en grand format).
    */
   featuredImage?: (number | null) | Media;
   /**
    * Chaque section alimente le sommaire interne du guide, dans l’ordre du tableau.
    */
   sections: {
+    /**
+     * 100 caractères maximum : il alimente le sommaire interne du guide.
+     */
     heading: string;
     /**
      * Dérivée du titre de la section, rendue unique automatiquement. Elle sert de lien dans le sommaire.
@@ -408,6 +470,9 @@ export interface Guide {
  */
 export interface Quiz {
   id: number;
+  /**
+   * Au-delà de 120 caractères, le titre casse la mise en page du grand format et est tronqué par Google.
+   */
   title: string;
   /**
    * Phrase d’accroche affichée avant de lancer le quiz et reprise dans la vignette du listing. 300 caractères maximum.
@@ -425,14 +490,20 @@ export interface Quiz {
    * Chaque question doit compter au moins deux réponses proposées et une seule réponse correcte.
    */
   questions: {
+    /**
+     * 300 caractères maximum.
+     */
     prompt: string;
     options: {
+      /**
+       * 150 caractères maximum.
+       */
       text: string;
       isCorrect?: boolean | null;
       id?: string | null;
     }[];
     /**
-     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz.
+     * Affichée juste après la réponse du joueur. Facultative, mais vivement recommandée : c’est elle qui donne sa valeur pédagogique au quiz. 500 caractères maximum.
      */
     explanation?: string | null;
     /**
@@ -506,6 +577,9 @@ export interface QuizResult {
  */
 export interface Provider {
   id: number;
+  /**
+   * 100 caractères maximum.
+   */
   name: string;
   /**
    * Facultatif : à défaut, l’annuaire affiche les initiales du prestataire.
@@ -568,7 +642,7 @@ export interface Provider {
    */
   contact?: {
     /**
-     * Facultatif : la personne à joindre chez le prestataire.
+     * Facultatif : la personne à joindre chez le prestataire. 80 caractères maximum.
      */
     contactName?: string | null;
     email?: string | null;
@@ -624,6 +698,128 @@ export interface ProviderSubscription {
    * Informations de suivi commercial, contact ou facturation.
    */
   notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Les organisateurs de salons CSE. Alimentent le champ « Organisateur » des salons et le filtre de la page Salons.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizers".
+ */
+export interface Organizer {
+  id: number;
+  name: string;
+  /**
+   * Généré automatiquement depuis le titre. Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * URL complète, avec https://
+   */
+  website?: string | null;
+  /**
+   * Facultatif, à usage interne : n’apparaît pas sur le site.
+   */
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Salons professionnels pour élus de CSE. Triés par date de début croissante : les prochains salons en tête, pour que l’équipe voie immédiatement ce qui approche.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  /**
+   * Le nom du salon, par exemple « Solutions CSE Paris ».
+   */
+  title: string;
+  /**
+   * Les organisateurs se gèrent dans Taxonomies › Organisateurs.
+   */
+  organizer: number | Organizer;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  featuredImage?: (number | null) | Media;
+  startDate: string;
+  /**
+   * Pour un salon d’une seule journée, la même date que le début.
+   */
+  endDate: string;
+  city: string;
+  /**
+   * Le site qui accueille le salon, par exemple « Parc des Princes ».
+   */
+  venue: string;
+  address?: string | null;
+  /**
+   * Sert au filtre géographique de la page Salons.
+   */
+  region:
+    | 'auvergne-rhone-alpes'
+    | 'bourgogne-franche-comte'
+    | 'bretagne'
+    | 'centre-val-de-loire'
+    | 'corse'
+    | 'grand-est'
+    | 'hauts-de-france'
+    | 'ile-de-france'
+    | 'normandie'
+    | 'nouvelle-aquitaine'
+    | 'occitanie'
+    | 'pays-de-la-loire'
+    | 'provence-alpes-cote-d-azur'
+    | 'guadeloupe'
+    | 'guyane'
+    | 'martinique'
+    | 'la-reunion'
+    | 'mayotte';
+  /**
+   * URL complète, avec https://
+   */
+  registrationUrl?: string | null;
+  isFree?: boolean | null;
+  /**
+   * Facultatif, indiqué par l’organisateur.
+   */
+  exhibitorCount?: number | null;
+  hasConferences?: boolean | null;
+  meta?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * Maximum upload file size: 12MB. Recommended file size for images is <500KB.
+     */
+    image?: (number | null) | Media;
+  };
+  /**
+   * Généré automatiquement depuis le titre et l’année de la date de début (un même salon revient chaque année). Modifiable, il sera normalisé.
+   */
+  slug?: string | null;
+  /**
+   * À mettre à jour chaque fois que les dates et le lieu sont revérifiés auprès de l’organisateur. Une information de salon périmée est pire que pas d’information : sans vérification récente, mieux vaut dépublier.
+   */
+  lastVerifiedAt?: string | null;
+  /**
+   * À cocher une fois la fiche relue et validée. Tant qu’elle est décochée, le salon n’apparaît pas sur le site public.
+   */
+  published?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -754,6 +950,14 @@ export interface PayloadLockedDocument {
         value: number | ProviderSubscription;
       } | null)
     | ({
+        relationTo: 'organizers';
+        value: number | Organizer;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
+      } | null)
+    | ({
         relationTo: 'testimonials';
         value: number | Testimonial;
       } | null)
@@ -843,6 +1047,50 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        og?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1051,6 +1299,50 @@ export interface ProviderSubscriptionsSelect<T extends boolean = true> {
   email?: T;
   status?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizers_select".
+ */
+export interface OrganizersSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  website?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  organizer?: T;
+  description?: T;
+  featuredImage?: T;
+  startDate?: T;
+  endDate?: T;
+  city?: T;
+  venue?: T;
+  address?: T;
+  region?: T;
+  registrationUrl?: T;
+  isFree?: T;
+  exhibitorCount?: T;
+  hasConferences?: T;
+  meta?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+      };
+  slug?: T;
+  lastVerifiedAt?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -49,3 +49,16 @@ export const interventionAreaValue = (value?: string | null): string | undefined
  */
 export const matchingAreas = (area: string): string[] =>
   area === NATIONWIDE_AREA ? [NATIONWIDE_AREA] : [area, NATIONWIDE_AREA]
+
+/**
+ * Mêmes régions, sans « France entière » : un salon se tient à un endroit
+ * précis, jamais partout à la fois (rubrique Salons, § 8). Partagée entre le
+ * champ `region` de la collection Events et le filtre régional de `/salons`.
+ */
+export const eventRegionOptions = interventionAreaOptions.filter(
+  (option) => option.value !== NATIONWIDE_AREA,
+)
+
+/** Une région de salon connue, ou `undefined` si l'URL en propose une autre (y compris « france »). */
+export const eventRegionValue = (value?: string | null): string | undefined =>
+  eventRegionOptions.some((option) => option.value === value) ? (value as string) : undefined
