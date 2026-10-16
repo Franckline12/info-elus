@@ -70,3 +70,26 @@ export const profileEditor = ({ linkTo = ['articles', 'guides'] }: ContentEditor
       InlineToolbarFeature(),
     ],
   })
+
+/**
+ * Éditeur de la description des salons (rubrique Salons CSE, § 8) : sous-titres,
+ * listes, gras, liens et encadré.
+ *
+ * Ni italique ni citation — une fiche salon reste factuelle — et surtout pas
+ * d'image : le visuel de la fiche est `featuredImage`, un second emplacement
+ * ferait double emploi.
+ */
+export const eventEditor = ({ linkTo = ['articles', 'guides'] }: ContentEditorArgs = {}) =>
+  lexicalEditor({
+    features: () => [
+      ParagraphFeature(),
+      HeadingFeature({ enabledHeadingSizes: ['h3'] }),
+      BoldFeature(),
+      UnorderedListFeature(),
+      OrderedListFeature(),
+      LinkFeature({ enabledCollections: linkTo }),
+      BlocksFeature({ blocks: [Callout] }),
+      FixedToolbarFeature(),
+      InlineToolbarFeature(),
+    ],
+  })

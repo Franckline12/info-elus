@@ -1,33 +1,15 @@
-import type { CollectionConfig, TextFieldSingleValidation } from 'payload'
+import type { CollectionConfig } from 'payload'
 
 import { loggedIn, publishedFlagOrLoggedIn } from '../access'
 import { profileEditor } from '../fields/contentEditor'
 import { slugField } from '../fields/slug'
+import { validateUrl } from '../fields/validateUrl'
 import { byPublishedFlag, revalidateContent } from '../hooks/revalidateContent'
 import { interventionAreaOptions } from '../lib/interventionAreas'
 
 const { afterChange, afterDelete } = revalidateContent('/prestataires', {
   isPublished: byPublishedFlag,
 })
-
-/**
- * Adresse d'un site tiers : on exige une URL absolue en http(s), sans quoi le
- * lien de la fiche partirait vers une page interne du site.
- */
-const validateWebsite: TextFieldSingleValidation = (value) => {
-  if (!value) return true
-
-  let url: URL
-  try {
-    url = new URL(value)
-  } catch {
-    return 'Adresse invalide : saisissez l’URL complète, par exemple https://exemple.fr'
-  }
-
-  return url.protocol === 'http:' || url.protocol === 'https:'
-    ? true
-    : 'L’adresse doit commencer par http:// ou https://'
-}
 
 /**
  * Réseau de prestataires (cahier des charges § 2.4) : annuaire en lecture
@@ -179,7 +161,7 @@ export const Providers: CollectionConfig = {
                   name: 'website',
                   type: 'text',
                   label: 'Site web',
-                  validate: validateWebsite,
+                  validate: validateUrl,
                   admin: {
                     description: 'URL complète, avec https://',
                   },

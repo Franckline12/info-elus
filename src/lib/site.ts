@@ -24,7 +24,7 @@ export type NavItem = {
 }
 
 /** Clé d'icône résolue côté composant : ce module reste sans dépendance MUI. */
-export type SectionIcon = 'news' | 'articles' | 'guides' | 'quiz' | 'providers'
+export type SectionIcon = 'news' | 'articles' | 'guides' | 'quiz' | 'providers' | 'events'
 
 export type SectionShortcut = NavItem & {
   description: string
@@ -38,6 +38,7 @@ export const navItems: NavItem[] = [
   { label: 'Guides', href: '/guides', icon: 'guides' },
   { label: 'Jeux & Quiz', href: '/jeux-quiz', icon: 'quiz' },
   { label: 'Prestataires', href: '/prestataires', icon: 'providers' },
+  { label: 'Salons', href: '/salons', icon: 'events' },
 ]
 
 export const legalNavItems: NavItem[] = [
